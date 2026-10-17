@@ -1,0 +1,15 @@
+android/
+.dart_tool/
+.idea/
+.git/
+test/
+lib/
+assets/
+build/app/
+build/flutter_assets/
+build/windows/
+build/*.dill
+*.apk
+*.aab
+*.jks
+*.keystore

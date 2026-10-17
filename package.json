@@ -1,0 +1,10 @@
+{
+  "name": "rbt-driver",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RBT Driver - Mitra Pengemudi Online Pidie",
+  "scripts": {
+    "build": "bash build.sh",
+    "vercel-build": "bash build.sh"
+  }
+}

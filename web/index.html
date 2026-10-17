@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Aplikasi Mitra Driver RBT Online Pidie - Sistem Penerimaan Order Cepat & Real-Time">
+  <meta name="theme-color" content="#0B132B">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RBT Driver">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>RBT Driver - Mitra Pengemudi Online Pidie</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #0B132B;
+      color: #F8FAFC;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+    #loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1C2541 0%, #0B132B 100%);
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    }
+    .radar-pulse {
+      position: relative;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 24px;
+    }
+    .radar-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid #00B4D8;
+      box-shadow: 0 0 15px rgba(0, 180, 216, 0.5);
+      animation: pulse 1.8s infinite cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    .radar-ring:nth-child(2) {
+      animation-delay: 0.6s;
+    }
+    .radar-ring:nth-child(3) {
+      animation-delay: 1.2s;
+    }
+    .radar-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #00B4D8, #2563EB);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 20px #00B4D8;
+    }
+    @keyframes pulse {
+      0% {
+        transform: scale(0.3);
+        opacity: 0.9;
+      }
+      80% {
+        opacity: 0.1;
+      }
+      100% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+    }
+    .app-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #F8FAFC;
+      margin-bottom: 6px;
+    }
+    .app-sub {
+      font-size: 13px;
+      color: #94A3B8;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-container">
+    <div class="radar-pulse">
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="radar-ring"></div>
+      <div class="radar-core"></div>
+    </div>
+    <div class="app-title">RBT DRIVER</div>
+    <div class="app-sub">Mitra Pengemudi Online Pidie</div>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function () {
+      const loader = document.getElementById('loading-container');
+      if (loader) {
+        setTimeout(function() {
+          loader.style.opacity = '0';
+          setTimeout(function() {
+            loader.remove();
+          }, 500);
+        }, 1200);
+      }
+    });
+  </script>
+</body>
+</html>
