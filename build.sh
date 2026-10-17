@@ -12,9 +12,12 @@ fi
 export PATH="$PATH:$HOME/flutter/bin"
 
 echo "=== Memeriksa Flutter ==="
+git config --global --add safe.directory "*"
+flutter config --no-analytics
 flutter --version
 
 echo "=== Membangun Flutter Web Release ==="
-flutter build web --release
+flutter pub get
+flutter build web --release --base-href /
 
 echo "=== Berhasil! Hasil build siap di folder build/web ==="
