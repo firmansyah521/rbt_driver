@@ -11,6 +11,8 @@ import '../models/driver_order_model.dart';
 import '../services/driver_routing_service.dart';
 import '../services/driver_service.dart';
 import '../widgets/driver_offline_banner.dart';
+import '../widgets/driver_tile_layer.dart';
+import '../widgets/grab_slide_button.dart';
 
 /// Layar Eksekusi Pesanan Aktif untuk Driver
 /// Menyediakan peta rute navigasi, visualisasi posisi motor driver secara real-time,
@@ -27,6 +29,7 @@ class DriverActiveJobScreen extends StatefulWidget {
 
 class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
   final MapController _mapController = MapController();
+  final GlobalKey<GrabSlideButtonState> _slideButtonKey = GlobalKey<GrabSlideButtonState>();
   late String _currentStatus;
   List<LatLng> _routePoints = [];
   bool _isLoadingRoute = true;
@@ -327,7 +330,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      _slideButtonKey.currentState?.reset();
+    });
   }
 
   void _showCompletedDialog() {
@@ -562,11 +567,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                     initialZoom: 15.0,
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.rbtpidie.driver',
-                      maxZoom: 19,
-                    ),
+                    const DriverTileLayer(),
                     if (_routePoints.isNotEmpty)
                       PolylineLayer(
                         polylines: [
@@ -1094,24 +1095,13 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
       );
     }
 
-    // TAHAP 3: Sedang mengantar -> selesai pengantaran dan tagih pembayaran
+    // TAHAP 3: Sedang mengantar -> selesai pengantaran dan tagih pembayaran (Tombol Slide Ala Grab)
     if (_currentStatus == 'delivering') {
-      return SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: DriverTheme.onlineGreen,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-          icon: const Icon(Icons.check_circle),
-          label: Text(
-            '3. SELESAI (TERIMA ${widget.order.formattedTotalFee})',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-          ),
-          onPressed: _confirmCompleteOrder,
-        ),
+      return GrabSlideButton(
+        key: _slideButtonKey,
+        label: 'GESER UNTUK SELESAIKAN',
+        sublabel: 'Terima ${widget.order.formattedTotalFee}',
+        onSlideComplete: _confirmCompleteOrder,
       );
     }
 

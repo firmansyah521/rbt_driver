@@ -25,7 +25,6 @@ class DriverProfileScreen extends StatefulWidget {
 class _DriverProfileScreenState extends State<DriverProfileScreen> {
   bool _isSavingPhoto = false;
   Uint8List? _pickedPhotoBytes;
-  String _currentPhotoUrl = '';
 
   @override
   void initState() {
@@ -50,8 +49,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   void _loadProfileData() {
-    final profile = DriverService.instance.profile;
-    _currentPhotoUrl = profile.photoUrl;
+    // Profil terambil langsung via DriverService.instance.profile
   }
 
   Future<void> _refreshProfile() async {
@@ -107,9 +105,6 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         await DriverService.instance.saveProfile(updated);
 
         if (!mounted) return;
-        setState(() {
-          _currentPhotoUrl = uploaded;
-        });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             backgroundColor: DriverTheme.onlineGreen,
