@@ -172,10 +172,10 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
     return ChoiceChip(
       label: Text(label),
       selected: isSelected,
-      selectedColor: DriverTheme.electricBlue,
-      backgroundColor: DriverTheme.surfaceDark,
+      selectedColor: DriverTheme.primaryBenhur,
+      backgroundColor: DriverTheme.cardDark,
       side: BorderSide(
-        color: isSelected ? DriverTheme.brightCyan : DriverTheme.cardBorder,
+        color: isSelected ? DriverTheme.primaryBenhurLight : DriverTheme.cardBorder,
       ),
       labelStyle: TextStyle(
         fontWeight: FontWeight.bold,
@@ -197,21 +197,22 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
         title: const Text('RIWAYAT & PENDAPATAN'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Segarkan',
             onPressed: _loadHistory,
           ),
         ],
       ),
       body: RefreshIndicator(
-        color: DriverTheme.brightCyan,
+        color: Colors.white,
+        backgroundColor: DriverTheme.cardDark,
         onRefresh: _loadHistory,
         child: Column(
           children: [
             // 1. Ringkasan Kas & Statistik
             _buildSummaryCard(),
 
-            // 2. Filter Tab Periode (Hari ini, Minggu ini, Bulan ini, Tahun ini, Semua)
+            // 2. Filter Tab Periode
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -233,7 +234,7 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
             // 3. Daftar Order
             Expanded(
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator(color: DriverTheme.brightCyan))
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white))
                   : list.isEmpty
                       ? _buildEmptyState()
                       : ListView.builder(
@@ -255,17 +256,16 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: DriverTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
+        color: DriverTheme.cardDark,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: DriverTheme.cardBorder),
-        boxShadow: DriverTheme.softShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             _summaryTitle,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: DriverTheme.textMuted, letterSpacing: 1),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: DriverTheme.textMuted, letterSpacing: 0.8),
           ),
           const SizedBox(height: 6),
           Row(
@@ -274,25 +274,25 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
             children: [
               Text(
                 _formatRupiah(_totalNetEarnings),
-                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: DriverTheme.onlineGreen),
+                style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: DriverTheme.onlineGreen.withValues(alpha: 0.15),
+                  color: DriverTheme.uberPillBg,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  'BERSIH (95%)',
-                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: DriverTheme.onlineGreen),
+                  'BERSIH',
+                  style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
-            'Omzet Kotor: ${_formatRupiah(_totalGrossEarnings)} • Potongan 5%: -${_formatRupiah(_totalPlatformFee)}',
+            'Total Nilai Order: ${_formatRupiah(_totalGrossEarnings)} • Bagi Hasil: ${_formatRupiah(_totalPlatformFee)}',
             style: const TextStyle(fontSize: 11, color: DriverTheme.textSecondary),
           ),
           const Divider(color: DriverTheme.cardBorder, height: 24),
@@ -342,7 +342,15 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 54, color: DriverTheme.textMuted.withValues(alpha: 0.5)),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: DriverTheme.cardDark,
+                shape: BoxShape.circle,
+                border: Border.all(color: DriverTheme.cardBorder),
+              ),
+              child: const Icon(Icons.receipt_long_outlined, size: 48, color: DriverTheme.textMuted),
+            ),
             const SizedBox(height: 16),
             const Text(
               'Belum Ada Riwayat Tarikan',
@@ -367,9 +375,9 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: DriverTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: DriverTheme.cardBorder.withValues(alpha: 0.7)),
+        color: DriverTheme.cardDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: DriverTheme.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -380,17 +388,17 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
               Row(
                 children: [
                   Icon(
-                    order.isFood ? Icons.restaurant : Icons.two_wheeler,
-                    size: 16,
-                    color: order.isFood ? DriverTheme.foodOrange : DriverTheme.brightCyan,
+                    order.isFood ? Icons.restaurant : Icons.two_wheeler_rounded,
+                    size: 15,
+                    color: Colors.white,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     order.typeLabel,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
-                      color: order.isFood ? DriverTheme.foodOrange : DriverTheme.brightCyan,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -430,11 +438,11 @@ class _DriverHistoryScreenState extends State<DriverHistoryScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
-                      color: isCompleted ? DriverTheme.onlineGreen : DriverTheme.textMuted,
+                      color: isCompleted ? Colors.white : DriverTheme.textMuted,
                     ),
                   ),
                   Text(
-                    'Kotor: ${_formatRupiah(order.deliveryFee)} (-5%: ${_formatRupiah(order.platformFee)})',
+                    'Ongkir: ${_formatRupiah(order.deliveryFee)}',
                     style: const TextStyle(
                       fontSize: 10,
                       color: DriverTheme.textMuted,

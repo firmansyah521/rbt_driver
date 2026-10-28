@@ -1049,11 +1049,22 @@ class DriverService {
     final myPhone = cleanPhone(_profile.phone);
     if (myPhone.isEmpty) return [];
 
+    final altPhone = myPhone.startsWith('0') ? '62${myPhone.substring(1)}' : myPhone;
+    final userId = currentUser?.id;
+    final conditions = <String>[
+      'driver_phone.eq.$myPhone',
+      'driver_phone.eq.$altPhone',
+      'driver_phone.eq.${_profile.phone}',
+    ];
+    if (userId != null && userId.isNotEmpty) {
+      conditions.add('driver_id.eq.$userId');
+    }
+
     try {
       final response = await c
           .from('orders')
           .select()
-          .or('driver_phone.eq.$myPhone,driver_phone.eq.${_profile.phone}')
+          .or(conditions.join(','))
           .inFilter('status', ['completed', 'cancelled'])
           .order('created_at', ascending: false)
           .limit(300);
@@ -1080,7 +1091,7 @@ class DriverService {
     int totalEarnings = 0;
     double totalKm = 0.0;
     for (final order in todayOrders) {
-      totalEarnings += order.deliveryFee;
+      totalEarnings += order.netEarnings;
       totalKm += order.distanceKm;
     }
 
@@ -1095,7 +1106,7 @@ class DriverService {
   Future<bool> topUpDeposit({
     required int amount,
     required String referenceId,
-    String paymentMethod = 'qris_midtrans',
+    String paymentMethod = 'qris_doku',
   }) async {
     final c = client;
     final user = currentUser;

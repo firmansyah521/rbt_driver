@@ -55,15 +55,15 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
               if (activeOrder == null) return const SizedBox.shrink();
 
               return Positioned(
-                top: MediaQuery.of(context).padding.top + 10,
+                top: MediaQuery.of(context).padding.top + 8,
                 left: 14,
                 right: 14,
                 child: Material(
-                  elevation: 8,
-                  borderRadius: BorderRadius.circular(16),
-                  color: DriverTheme.electricBlue,
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(12),
+                  color: DriverTheme.cardDark,
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -72,39 +72,57 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
                         ),
                       );
                     },
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: DriverTheme.cardBorder, width: 1.0),
+                      ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(7),
                             decoration: const BoxDecoration(
-                              color: Colors.white24,
+                              color: DriverTheme.uberPillBg,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.two_wheeler, color: Colors.white, size: 20),
+                            child: const Icon(Icons.two_wheeler_rounded, color: DriverTheme.onlineGreen, size: 18),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
-                                  'TARIKAN SEDANG BERJALAN',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white70,
-                                    letterSpacing: 0.5,
-                                  ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: const BoxDecoration(
+                                        color: DriverTheme.onlineGreen,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 5),
+                                    const Text(
+                                      'TARIKAN SEDANG AKTIF',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: DriverTheme.onlineGreen,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(height: 2),
                                 Text(
                                   '#${activeOrder.orderCode} • ${activeOrder.customerName}',
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: DriverTheme.textPrimary,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -112,10 +130,10 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
+                              color: DriverTheme.uberWhite,
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Row(
                               children: [
@@ -124,10 +142,11 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: DriverTheme.electricBlue,
+                                    color: DriverTheme.primaryBenhur,
                                   ),
                                 ),
-                                Icon(Icons.arrow_forward_ios, size: 10, color: DriverTheme.electricBlue),
+                                SizedBox(width: 4),
+                                Icon(Icons.arrow_forward_ios_rounded, size: 10, color: DriverTheme.primaryBenhur),
                               ],
                             ),
                           ),
@@ -142,16 +161,17 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
         ],
       ),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: DriverTheme.surfaceDark,
-          border: Border(top: BorderSide(color: DriverTheme.cardBorder.withValues(alpha: 0.6))),
+        decoration: const BoxDecoration(
+          color: DriverTheme.darkBg,
+          border: Border(top: BorderSide(color: DriverTheme.cardBorder, width: 1.0)),
         ),
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
-          backgroundColor: DriverTheme.surfaceDark,
-          selectedItemColor: DriverTheme.brightCyan,
+          elevation: 0,
+          backgroundColor: DriverTheme.darkBg,
+          selectedItemColor: DriverTheme.primaryBenhurLight,
           unselectedItemColor: DriverTheme.textMuted,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
           type: BottomNavigationBarType.fixed,
           onTap: (index) {
@@ -164,17 +184,17 @@ class _DriverMainScreenState extends State<DriverMainScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.radar_outlined),
               activeIcon: Icon(Icons.radar),
-              label: 'Radar Order',
+              label: 'Radar',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.receipt_long_outlined),
               activeIcon: Icon(Icons.receipt_long),
-              label: 'Riwayat Kas',
+              label: 'Riwayat',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: 'Profil Driver',
+              label: 'Akun',
             ),
           ],
         ),

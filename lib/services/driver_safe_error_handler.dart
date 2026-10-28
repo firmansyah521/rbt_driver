@@ -50,7 +50,10 @@ class DriverSafeErrorHandler {
     result = result.replaceAll(RegExp(r'Bearer\s+[a-zA-Z0-9_\-\.]+', caseSensitive: false), 'Bearer [PROTECTED]');
     result = result.replaceAll(RegExp(r'eyJ[a-zA-Z0-9_\-]{20,}\.[a-zA-Z0-9_\-]{20,}\.[a-zA-Z0-9_\-]+'), '[JWT_TOKEN_PROTECTED]');
 
-    // Sensor Midtrans keys
+    // Sensor DOKU / Midtrans keys
+    result = result.replaceAll(RegExp(r'SK-[a-zA-Z0-9_\-]+', caseSensitive: false), '[DOKU_SECRET_PROTECTED]');
+    result = result.replaceAll(RegExp(r'doku_key_[a-zA-Z0-9_\-]+', caseSensitive: false), '[DOKU_APIKEY_PROTECTED]');
+    result = result.replaceAll(RegExp(r'BRN-[0-9\-]+', caseSensitive: false), '[DOKU_CLIENT_PROTECTED]');
     result = result.replaceAll(RegExp(r'Mid-(client|server)-[a-zA-Z0-9_\-]+', caseSensitive: false), '[MIDTRANS_KEY_PROTECTED]');
 
     // Sensor domain backend & email internal

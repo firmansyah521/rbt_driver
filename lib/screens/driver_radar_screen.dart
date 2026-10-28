@@ -53,10 +53,16 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
   // Pelacakan pesanan aktif yang sedang dikerjakan driver ini
   DriverOrderModel? _currentActiveJob;
   StreamSubscription<DriverOrderModel?>? _activeJobSub;
+  Stream<List<DriverOrderModel>>? _incomingOrdersStream;
+
+  void _initOrdersStream() {
+    _incomingOrdersStream = DriverService.instance.streamIncomingOrders();
+  }
 
   @override
   void initState() {
     super.initState();
+    _initOrdersStream();
     _loadTodaySummary();
     _fetchManualOrders();
     _initDriverLocation();
@@ -394,18 +400,18 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: DriverTheme.surfaceDark,
+        backgroundColor: DriverTheme.cardDark,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: DriverTheme.alertAmber, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: DriverTheme.cardBorder, width: 1.0),
         ),
         title: const Row(
           children: [
-            Icon(Icons.account_balance_wallet_outlined, color: DriverTheme.alertAmber, size: 24),
+            Icon(Icons.account_balance_wallet_outlined, color: DriverTheme.alertAmber, size: 22),
             SizedBox(width: 8),
             Text(
               'Saldo Deposit Kurang',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -414,8 +420,8 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Untuk mengambil orderan ini, Anda membutuhkan saldo deposit untuk potongan biaya admin aplikasi sebesar 5%.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              'Untuk mengambil orderan ini, pastikan saldo deposit Anda mencukupi.',
+              style: TextStyle(color: DriverTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
             Container(
@@ -430,7 +436,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Biaya Admin (5%):', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      const Text('Biaya Layanan Order:', style: TextStyle(color: DriverTheme.textMuted, fontSize: 12)),
                       Text(
                         currency.format(adminFee),
                         style: const TextStyle(color: DriverTheme.alertAmber, fontWeight: FontWeight.bold, fontSize: 13),
@@ -441,7 +447,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Saldo Deposit Anda:', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                      const Text('Saldo Deposit Anda:', style: TextStyle(color: DriverTheme.textMuted, fontSize: 12)),
                       Text(
                         currency.format(depositBalance),
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
@@ -453,7 +459,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Silakan lakukan Top Up via QRIS Midtrans terlebih dahulu untuk melanjutkan.',
+              'Silakan lakukan Top Up via QRIS DOKU terlebih dahulu untuk melanjutkan.',
               style: TextStyle(color: DriverTheme.textMuted, fontSize: 11),
             ),
           ],
@@ -461,12 +467,13 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Nanti', style: TextStyle(color: Colors.white60)),
+            child: const Text('Nanti', style: TextStyle(color: DriverTheme.textSecondary)),
           ),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DriverTheme.brightCyan,
-              foregroundColor: Colors.black,
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              elevation: 0,
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -495,18 +502,18 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: DriverTheme.surfaceDark,
+        backgroundColor: DriverTheme.cardDark,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: DriverTheme.warningYellow, width: 1.5),
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: DriverTheme.cardBorder, width: 1.0),
         ),
         title: const Row(
           children: [
-            Icon(Icons.lock_clock, color: DriverTheme.warningYellow, size: 24),
+            Icon(Icons.lock_clock, color: DriverTheme.warningYellow, size: 22),
             SizedBox(width: 8),
             Text(
               'Pesanan Belum Selesai',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -516,19 +523,19 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           children: [
             const Text(
               'Sesuai aturan operasional mitra, Anda tidak dapat mengambil orderan lain sebelum menyelesaikan pesanan pertama yang sedang berjalan.',
-              style: TextStyle(color: Colors.white70, fontSize: 13),
+              style: TextStyle(color: DriverTheme.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.white10,
+                color: DriverTheme.darkBg,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white24),
+                border: Border.all(color: DriverTheme.cardBorder),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.two_wheeler, color: DriverTheme.brightCyan, size: 20),
+                  const Icon(Icons.two_wheeler, color: DriverTheme.onlineGreen, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
@@ -540,7 +547,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                         ),
                         Text(
                           'Pelanggan: ${activeJob.customerName}',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          style: const TextStyle(color: DriverTheme.textMuted, fontSize: 11),
                         ),
                       ],
                     ),
@@ -553,12 +560,13 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Tutup', style: TextStyle(color: Colors.white60)),
+            child: const Text('Tutup', style: TextStyle(color: DriverTheme.textSecondary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DriverTheme.electricBlue,
+              backgroundColor: DriverTheme.primaryBenhur,
               foregroundColor: Colors.white,
+              elevation: 0,
               minimumSize: Size.zero,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -584,9 +592,9 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
       margin: const EdgeInsets.fromLTRB(16, 10, 16, 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: DriverTheme.warningYellow.withValues(alpha: 0.12),
+        color: DriverTheme.cardDark,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: DriverTheme.warningYellow, width: 1.2),
+        border: Border.all(color: DriverTheme.warningYellow.withValues(alpha: 0.6), width: 1.0),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -594,7 +602,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           Container(
             padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
-              color: DriverTheme.warningYellow.withValues(alpha: 0.2),
+              color: DriverTheme.warningYellow.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.lock_clock_rounded, color: DriverTheme.warningYellow, size: 20),
@@ -619,7 +627,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                 const SizedBox(height: 2),
                 Text(
                   'Order #${activeJob.orderCode} (${activeJob.customerName}). Selesaikan order ini terlebih dahulu sebelum mengambil order baru.',
-                  style: const TextStyle(fontSize: 11, color: Colors.white70, height: 1.2),
+                  style: const TextStyle(fontSize: 11, color: DriverTheme.textSecondary, height: 1.2),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -629,8 +637,9 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           const SizedBox(width: 10),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DriverTheme.warningYellow,
-              foregroundColor: Colors.black87,
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               visualDensity: VisualDensity.compact,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -653,12 +662,15 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: DriverTheme.cardDark,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: DriverTheme.cardBorder, width: 1.0),
+        ),
         title: const Row(
           children: [
-            Icon(Icons.lock_person, color: DriverTheme.brightCyan),
+            Icon(Icons.lock_person, color: DriverTheme.uberWhite),
             SizedBox(width: 10),
-            Text('Masuk Diperlukan', style: TextStyle(color: Colors.white, fontSize: 16)),
+            Text('Masuk Diperlukan', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
           ],
         ),
         content: const Text(
@@ -672,14 +684,15 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DriverTheme.electricBlue,
+              backgroundColor: DriverTheme.primaryBenhur,
               foregroundColor: Colors.white,
+              elevation: 0,
             ),
             onPressed: () {
               Navigator.pop(ctx);
               _openAuthScreen();
             },
-            child: const Text('Masuk / Daftar'),
+            child: const Text('Masuk / Daftar', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -695,38 +708,39 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     return WithForegroundTask(
       child: Scaffold(
       appBar: AppBar(
-        title: FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: Alignment.centerLeft,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 24,
+                height: 24,
+                cacheWidth: 64,
+                cacheHeight: 64,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              decoration: BoxDecoration(
+                color: DriverTheme.uberPillBg,
                 borderRadius: BorderRadius.circular(6),
-                child: Image.asset(
-                  'assets/images/app_logo.png',
-                  width: 26,
-                  height: 26,
-                  fit: BoxFit.cover,
-                ),
+                border: Border.all(color: DriverTheme.uberBorder),
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: DriverTheme.electricBlue.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: DriverTheme.electricBlue),
-                ),
-                child: const Text(
-                  'MITRA PIDIE',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: DriverTheme.brightCyan),
-                ),
+              child: const Text(
+                'MITRA',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 0.5),
               ),
-              const SizedBox(width: 8),
-              const Text('RADAR ORDER'),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            const Text(
+              'RADAR ORDER',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -734,13 +748,18 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(color: DriverTheme.brightCyan, strokeWidth: 2),
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
-                : const Icon(Icons.refresh),
+                : const Icon(Icons.refresh_rounded),
             tooltip: 'Segarkan Radar',
             onPressed: () {
               _loadTodaySummary();
               _fetchManualOrders();
+              if (mounted) {
+                setState(() {
+                  _initOrdersStream();
+                });
+              }
             },
           ),
         ],
@@ -768,14 +787,19 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                 child: !isOnline
                     ? _buildOfflineState()
                     : RefreshIndicator(
-                        color: DriverTheme.brightCyan,
+                        color: DriverTheme.uberWhite,
                         backgroundColor: DriverTheme.surfaceDark,
                         onRefresh: () async {
                           await _loadTodaySummary();
                           await _fetchManualOrders();
+                          if (mounted) {
+                            setState(() {
+                              _initOrdersStream();
+                            });
+                          }
                         },
                         child: StreamBuilder<List<DriverOrderModel>>(
-                          stream: DriverService.instance.streamIncomingOrders(),
+                          stream: _incomingOrdersStream ?? DriverService.instance.streamIncomingOrders(),
                           builder: (context, snapshot) {
                             // Jika stream ada data, prioritaskan stream
                             List<DriverOrderModel> orders = [];
@@ -793,7 +817,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                                 orders.isEmpty &&
                                 _isLoadingManual) {
                               return const Center(
-                                child: CircularProgressIndicator(color: DriverTheme.brightCyan),
+                                child: CircularProgressIndicator(color: Colors.white),
                               );
                             }
 
@@ -807,7 +831,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                             }
 
                             return ListView.builder(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               physics: const AlwaysScrollableScrollPhysics(),
                               itemCount: orders.length,
                               itemBuilder: (context, index) {
@@ -830,12 +854,12 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: DriverTheme.alertAmber.withValues(alpha: 0.15),
-        border: Border(bottom: BorderSide(color: DriverTheme.alertAmber.withValues(alpha: 0.4))),
+        color: DriverTheme.cardDark,
+        border: const Border(bottom: BorderSide(color: DriverTheme.cardBorder)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: DriverTheme.alertAmber, size: 22),
+          const Icon(Icons.info_outline_rounded, color: DriverTheme.alertAmber, size: 20),
           const SizedBox(width: 12),
           const Expanded(
             child: Column(
@@ -843,11 +867,11 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
               children: [
                 Text(
                   'Akun Mitra Belum Masuk',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: DriverTheme.alertAmber),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 Text(
-                  'Masuk atau daftar akun mitra untuk membaca & menerima orderan di Pidie.',
-                  style: TextStyle(fontSize: 11, color: Colors.white70),
+                  'Masuk atau daftar untuk menerima orderan di Pidie.',
+                  style: TextStyle(fontSize: 11, color: DriverTheme.textMuted),
                 ),
               ],
             ),
@@ -855,10 +879,12 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           const SizedBox(width: 8),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: DriverTheme.alertAmber,
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               minimumSize: Size.zero,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () => _openAuthScreen(),
             child: const Text('Masuk', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
@@ -874,71 +900,84 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     final count = (_todaySummary['count'] as num?)?.toInt() ?? 0;
 
     final name = profile.name.toString().isNotEmpty ? profile.name : 'Mitra RBT';
-    final plate = profile.plateNumber.toString().isNotEmpty ? profile.plateNumber : 'Belum Ada Plat';
+    final plate = profile.plateNumber.toString().isNotEmpty ? profile.plateNumber : 'Plat Belum Ada';
     final int depositBalance = (profile?.depositBalance is num)
         ? (profile.depositBalance as num).toInt()
         : int.tryParse(profile?.depositBalance?.toString() ?? '0') ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: DriverTheme.surfaceDark,
-        border: Border(bottom: BorderSide(color: DriverTheme.cardBorder.withValues(alpha: 0.6))),
+      decoration: const BoxDecoration(
+        color: DriverTheme.darkBg,
+        border: Border(bottom: BorderSide(color: DriverTheme.cardBorder, width: 1.0)),
       ),
       child: Column(
         children: [
-          // Switch Online / Offline
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 14,
-                      height: 14,
-                      decoration: BoxDecoration(
-                        color: isOnline ? DriverTheme.onlineGreen : DriverTheme.offlineRed,
-                        shape: BoxShape.circle,
-                        boxShadow: isOnline ? DriverTheme.glowGreen : null,
+          // Switch Online / Offline Ala Uber
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: DriverTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: DriverTheme.cardBorder),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: isOnline ? DriverTheme.onlineGreen : DriverTheme.offlineRed,
+                          shape: BoxShape.circle,
+                          boxShadow: isOnline ? DriverTheme.glowGreen : null,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            isOnline ? 'SIAP TERIMA ORDER' : 'STATUS: OFFLINE',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: isOnline ? DriverTheme.onlineGreen : DriverTheme.offlineRed,
-                              letterSpacing: 0.5,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isOnline ? 'ONLINE • SIAP TERIMA ORDER' : 'OFFLINE',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                                color: isOnline ? DriverTheme.onlineGreen : DriverTheme.textSecondary,
+                                letterSpacing: 0.3,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '$name • $plate',
-                            style: const TextStyle(fontSize: 12, color: DriverTheme.textSecondary),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                            const SizedBox(height: 1),
+                            Text(
+                              '$name • $plate',
+                              style: const TextStyle(fontSize: 11, color: DriverTheme.textMuted),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Transform.scale(
-                scale: 0.9,
-                child: Switch(
+                const SizedBox(width: 8),
+                Switch(
                   value: isOnline,
                   activeThumbColor: DriverTheme.onlineGreen,
-                  activeTrackColor: DriverTheme.onlineGreen.withValues(alpha: 0.4),
+                  activeTrackColor: DriverTheme.onlineGreen.withValues(alpha: 0.3),
                   inactiveThumbColor: Colors.grey,
+                  inactiveTrackColor: DriverTheme.uberPillBg,
                   onChanged: (val) async {
                     await DriverService.instance.setDutyStatus(val);
-                    if (mounted) setState(() {});
+                    if (mounted) {
+                      setState(() {
+                        if (val) {
+                          _initOrdersStream();
+                        }
+                      });
+                    }
                     if (val) {
                       _fetchManualOrders();
                       DriverForegroundService.instance.requestIgnoreBatteryOptimization();
@@ -946,16 +985,16 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                     }
                   },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Mini Statistik Penghasilan
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: DriverTheme.darkBg,
+              color: DriverTheme.cardDark,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: DriverTheme.cardBorder),
             ),
@@ -966,16 +1005,16 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                   child: Column(
                     children: [
                       const Text(
-                        'Order Selesai Hari Ini',
+                        'Order Hari Ini',
                         style: TextStyle(fontSize: 11, color: DriverTheme.textMuted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       Text(
                         '$count Pesanan',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
+                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -993,12 +1032,12 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         child: Text(
                           'Rp ${earnings.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: DriverTheme.brightCyan),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
                         ),
                       ),
                     ],
@@ -1013,26 +1052,19 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  DriverTheme.electricBlue.withValues(alpha: 0.18),
-                  DriverTheme.darkBg,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: DriverTheme.cardDark,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: DriverTheme.electricBlue.withValues(alpha: 0.4)),
+              border: Border.all(color: DriverTheme.cardBorder),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: DriverTheme.brightCyan.withValues(alpha: 0.15),
+                  decoration: const BoxDecoration(
+                    color: DriverTheme.uberPillBg,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.account_balance_wallet_rounded, color: DriverTheme.brightCyan, size: 20),
+                  child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1040,7 +1072,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Saldo Deposit (Biaya Admin 5%)',
+                        'Saldo Deposit Operasional',
                         style: TextStyle(fontSize: 10, color: DriverTheme.textMuted),
                       ),
                       Text(
@@ -1048,7 +1080,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: depositBalance > 5000 ? DriverTheme.onlineGreen : DriverTheme.alertAmber,
+                          color: depositBalance > 5000 ? Colors.white : DriverTheme.alertAmber,
                         ),
                       ),
                     ],
@@ -1057,16 +1089,16 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: DriverTheme.brightCyan,
-                    foregroundColor: Colors.black,
+                    backgroundColor: DriverTheme.primaryBenhur,
+                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                     minimumSize: Size.zero,
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 2,
+                    elevation: 0,
                   ),
-                  icon: const Icon(Icons.add, size: 16),
+                  icon: const Icon(Icons.add_rounded, size: 16),
                   label: const Text('Top Up', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                   onPressed: () {
                     DriverQrisDialog.show(
@@ -1095,13 +1127,13 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: DriverTheme.surfaceDark,
+                color: DriverTheme.cardDark,
                 shape: BoxShape.circle,
-                border: Border.all(color: DriverTheme.offlineRed.withValues(alpha: 0.5), width: 2),
+                border: Border.all(color: DriverTheme.cardBorder, width: 1.5),
               ),
-              child: const Icon(Icons.power_settings_new_rounded, size: 60, color: DriverTheme.offlineRed),
+              child: const Icon(Icons.power_settings_new_rounded, size: 54, color: DriverTheme.textSecondary),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -1110,18 +1142,19 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Nyalakan status di atas menjadi ONLINE untuk mulai mendeteksi pesanan yang masuk di Pidie.',
+              'Nyalakan status dinas untuk mulai mendeteksi dan menerima pesanan masuk di Pidie.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 13, color: DriverTheme.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
+            ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: DriverTheme.onlineGreen,
+                backgroundColor: DriverTheme.primaryBenhur,
+                foregroundColor: Colors.white,
                 minimumSize: const Size(200, 48),
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              icon: const Icon(Icons.bolt, color: Colors.white),
-              label: const Text('AKTIFKAN RADAR', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               onPressed: () async {
                 await DriverService.instance.setDutyStatus(true);
                 if (mounted) setState(() {});
@@ -1129,6 +1162,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                 DriverForegroundService.instance.requestIgnoreBatteryOptimization();
                 _broadcastStandbyLocation(force: true);
               },
+              child: const Text('AKTIFKAN RADAR', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
             ),
           ],
         ),
@@ -1145,13 +1179,13 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: DriverTheme.surfaceDark,
+                color: DriverTheme.cardDark,
                 shape: BoxShape.circle,
-                border: Border.all(color: DriverTheme.brightCyan.withValues(alpha: 0.4), width: 2),
+                border: Border.all(color: DriverTheme.cardBorder, width: 1.0),
               ),
-              child: const Icon(Icons.radar_rounded, size: 54, color: DriverTheme.brightCyan),
+              child: const Icon(Icons.radar_rounded, size: 48, color: Colors.white),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -1160,15 +1194,15 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Tetap aktif di layar ini. Pesanan baru dari pelanggan di wilayah Pidie akan bergetar dan muncul otomatis.',
+              'Tetap aktif di layar ini. Pesanan baru dari pelanggan di wilayah Pidie akan berdering otomatis.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: DriverTheme.textSecondary, height: 1.4),
             ),
             const SizedBox(height: 16),
             TextButton.icon(
               onPressed: _fetchManualOrders,
-              icon: const Icon(Icons.sync, color: DriverTheme.brightCyan, size: 16),
-              label: const Text('Cek Sekarang (Manual)', style: TextStyle(color: DriverTheme.brightCyan, fontSize: 12)),
+              icon: const Icon(Icons.sync, color: Colors.white70, size: 16),
+              label: const Text('Cek Manual', style: TextStyle(color: Colors.white70, fontSize: 12)),
             ),
           ],
         ),
@@ -1182,127 +1216,84 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
     final pickupDistanceText = _formatDistanceToPickup(order);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: DriverTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(16),
+        color: DriverTheme.cardDark,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: isNearest
-              ? DriverTheme.brightCyan
-              : (isFood ? DriverTheme.foodOrange : DriverTheme.electricBlue),
-          width: isNearest ? 2.2 : 1.5,
+          color: isNearest ? DriverTheme.primaryBenhurLight : DriverTheme.cardBorder,
+          width: isNearest ? 1.5 : 1.0,
         ),
         boxShadow: isNearest
-            ? [
+            ? DriverTheme.glowBlue
+            : const [
                 BoxShadow(
-                  color: DriverTheme.brightCyan.withValues(alpha: 0.25),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 2),
+                  color: Color(0x18000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 2),
                 ),
-              ]
-            : DriverTheme.softShadow,
+              ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Badge Spesial Khusus Orderan Pertama (Paling Dekat dengan Posisi Driver)
-            if (isNearest)
-              Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [DriverTheme.electricBlue, DriverTheme.brightCyan],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: DriverTheme.brightCyan.withValues(alpha: 0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.bolt_rounded, color: Colors.white, size: 15),
-                    const SizedBox(width: 4),
-                    const Expanded(
-                      child: Text(
-                        '🌟 TERDEKAT • EFISIEN',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                          letterSpacing: 0.3,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '📍 $pickupDistanceText',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
             // Header Kartu: Tipe Layanan & Tarif Tunai
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: isFood
-                          ? DriverTheme.foodOrange.withValues(alpha: 0.2)
-                          : DriverTheme.electricBlue.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isFood ? DriverTheme.foodOrange : DriverTheme.electricBlue,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: DriverTheme.uberPillBg,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: DriverTheme.uberBorder),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isFood ? Icons.restaurant : Icons.two_wheeler_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            order.typeLabel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isFood ? Icons.restaurant : Icons.two_wheeler,
-                          size: 15,
-                          color: isFood ? DriverTheme.foodOrange : DriverTheme.brightCyan,
+                    if (isNearest) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: DriverTheme.primaryBenhur,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            order.typeLabel,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: isFood ? DriverTheme.foodOrange : DriverTheme.brightCyan,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        child: const Text(
+                          'TERDEKAT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 0.3,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -1313,16 +1304,15 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: DriverTheme.onlineGreen,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                     Text(
-                      'Admin 5%: Rp ${((order.deliveryFee * 0.05).round()).toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}',
+                      'Ongkir: ${order.formattedDeliveryFee}',
                       style: const TextStyle(
-                        fontSize: 10,
+                        fontSize: 11,
                         color: DriverTheme.textMuted,
-                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -1333,105 +1323,84 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
 
             // Order Code, Pelanggan, & Jarak
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '#${order.orderCode}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'monospace',
-                    fontWeight: FontWeight.bold,
-                    color: DriverTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '• ${order.customerName}',
+                    '#${order.orderCode} • ${order.customerName}',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: DriverTheme.textPrimary,
+                      color: DriverTheme.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: DriverTheme.cardDark,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: isNearest
-                          ? DriverTheme.brightCyan.withValues(alpha: 0.6)
-                          : DriverTheme.cardBorder,
-                    ),
+                    color: DriverTheme.uberPillBg,
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.near_me_rounded,
-                        size: 11,
-                        color: isNearest ? DriverTheme.brightCyan : DriverTheme.onlineGreen,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Jemput: $pickupDistanceText',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: isNearest ? DriverTheme.brightCyan : DriverTheme.onlineGreen,
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '📍 $pickupDistanceText',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
             ),
             const Divider(color: DriverTheme.cardBorder, height: 20),
 
-            // Titik Jemput
+            // Rute: Titik Jemput (Lingkaran) -> Garis -> Titik Antar (Kotak)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.my_location, size: 16, color: DriverTheme.onlineGreen),
-                const SizedBox(width: 8),
+                Column(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: DriverTheme.onlineGreen,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Container(
+                      width: 1.5,
+                      height: 24,
+                      color: DriverTheme.cardBorder,
+                    ),
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.rectangle,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isFood ? 'Titik Usaha Makanan / Resto:' : 'Titik Penjemputan:',
-                        style: const TextStyle(fontSize: 10, color: DriverTheme.textMuted),
-                      ),
                       Text(
                         order.pickupAddress,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // Titik Antar
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(Icons.location_on, size: 16, color: DriverTheme.offlineRed),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Titik Antar Tujuan:',
-                        style: TextStyle(fontSize: 10, color: DriverTheme.textMuted),
-                      ),
+                      const SizedBox(height: 16),
                       Text(
                         order.destinationAddress,
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -1444,31 +1413,31 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                 decoration: BoxDecoration(
-                  color: DriverTheme.alertAmber.withValues(alpha: 0.15),
+                  color: DriverTheme.uberPillBg,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: DriverTheme.alertAmber.withValues(alpha: 0.4)),
+                  border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 child: Text(
-                  'Pesanan: ${order.foodNotes}',
-                  style: const TextStyle(fontSize: 11, color: DriverTheme.alertAmber, fontWeight: FontWeight.w600),
+                  'Catatan: ${order.foodNotes}',
+                  style: const TextStyle(fontSize: 11, color: DriverTheme.alertAmber, fontWeight: FontWeight.w500),
                 ),
               ),
             ],
 
             const SizedBox(height: 14),
 
-            // Tombol Terima Order (Otomatis terkunci jika masih ada pesanan pertama yang berjalan)
+            // Tombol Terima Order
             SizedBox(
               width: double.infinity,
               height: 48,
               child: _currentActiveJob != null
                   ? OutlinedButton.icon(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: DriverTheme.warningYellow, width: 1.2),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        backgroundColor: DriverTheme.warningYellow.withValues(alpha: 0.1),
+                        side: const BorderSide(color: DriverTheme.warningYellow, width: 1.0),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        backgroundColor: Colors.transparent,
                       ),
                       icon: const Icon(Icons.lock_clock, color: DriverTheme.warningYellow, size: 18),
                       label: Text(
@@ -1481,24 +1450,25 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
                       ),
                       onPressed: () => _showActiveOrderBlockDialog(_currentActiveJob!),
                     )
-                  : ElevatedButton.icon(
+                  : ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isFood ? DriverTheme.foodOrange : DriverTheme.electricBlue,
+                        backgroundColor: DriverTheme.primaryBenhur,
                         foregroundColor: Colors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shadowColor: DriverTheme.primaryBenhur.withValues(alpha: 0.4),
                       ),
-                      icon: _isClaiming
+                      onPressed: _isClaiming ? null : () => _handleClaimOrder(order),
+                      child: _isClaiming
                           ? const SizedBox(
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
-                          : const Icon(Icons.check_circle_outline, size: 20),
-                      label: Text(
-                        _isClaiming ? 'MENGAMBIL PESANAN...' : 'TERIMA ORDER INI',
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                      ),
-                      onPressed: _isClaiming ? null : () => _handleClaimOrder(order),
+                          : const Text(
+                              'TERIMA ORDER INI',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.3),
+                            ),
                     ),
             ),
           ],

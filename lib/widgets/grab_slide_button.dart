@@ -77,9 +77,9 @@ class GrabSlideButtonState extends State<GrabSlideButton>
   @override
   Widget build(BuildContext context) {
     final effectiveTrackColor =
-        widget.trackColor ?? const Color(0xFF064E3B); // Deep forest green
+        widget.trackColor ?? const Color(0xFF161616); // Uber Sleek Obsidian
     final effectiveSliderColor =
-        widget.sliderColor ?? DriverTheme.onlineGreen; // Vibrant Grab green
+        widget.sliderColor ?? DriverTheme.onlineGreen; // Uber vibrant green
     final thumbSize = widget.height - 8.0;
 
     return LayoutBuilder(
@@ -93,26 +93,21 @@ class GrabSlideButtonState extends State<GrabSlideButton>
             color: effectiveTrackColor,
             borderRadius: BorderRadius.circular(widget.height / 2),
             border: Border.all(
-              color: effectiveSliderColor.withValues(alpha: 0.5),
-              width: 1.5,
+              color: DriverTheme.cardBorder,
+              width: 1.2,
             ),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-              BoxShadow(
-                color: effectiveSliderColor.withValues(alpha: 0.2),
-                blurRadius: 12,
-                spreadRadius: 1,
+                color: Color(0x33000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
               ),
             ],
           ),
           child: Stack(
             alignment: Alignment.centerLeft,
             children: [
-              // 1. ACTIVE PROGRESS TRACK (Fill hijau terang mengikuti tarikan)
+              // 1. ACTIVE PROGRESS TRACK (Fill hijau mengikuti tarikan)
               Positioned(
                 left: 0,
                 top: 0,
@@ -120,12 +115,7 @@ class GrabSlideButtonState extends State<GrabSlideButton>
                 width: _dragPosition + (thumbSize / 2) + 4.0,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        effectiveSliderColor.withValues(alpha: 0.35),
-                        effectiveSliderColor.withValues(alpha: 0.65),
-                      ],
-                    ),
+                    color: effectiveSliderColor.withValues(alpha: 0.25),
                     borderRadius: BorderRadius.circular(widget.height / 2),
                   ),
                 ),

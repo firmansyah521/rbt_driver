@@ -81,6 +81,19 @@ class DriverOrderModel {
     }
   }
 
+  String get formattedDeliveryFee {
+    try {
+      final formatter = NumberFormat.currency(
+        locale: 'id_ID',
+        symbol: 'Rp ',
+        decimalDigits: 0,
+      );
+      return formatter.format(deliveryFee);
+    } catch (_) {
+      return 'Rp ${deliveryFee.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}';
+    }
+  }
+
   DriverOrderModel copyWith({
     String? id,
     String? orderCode,

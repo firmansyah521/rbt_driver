@@ -111,60 +111,76 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
       context: context,
       backgroundColor: DriverTheme.cardDark,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Pilih Foto Profil Driver',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: DriverTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: DriverTheme.electricBlue.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Pilih Foto Profil Driver',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: const Icon(Icons.camera_alt, color: DriverTheme.brightCyan),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white60, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: DriverTheme.uberPillBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: DriverTheme.cardBorder),
+                  ),
+                  child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                 ),
-                title: const Text('Buka Kamera', style: TextStyle(color: Colors.white)),
+                title: const Text('Buka Kamera', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.camera);
                 },
               ),
               ListTile(
+                contentPadding: EdgeInsets.zero,
                 leading: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: DriverTheme.electricBlue.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    color: DriverTheme.uberPillBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: DriverTheme.cardBorder),
                   ),
-                  child: const Icon(Icons.photo_library, color: DriverTheme.brightCyan),
+                  child: const Icon(Icons.photo_library, color: Colors.white, size: 20),
                 ),
-                title: const Text('Pilih dari Galeri', style: TextStyle(color: Colors.white)),
+                title: const Text('Pilih dari Galeri', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
                 onTap: () {
                   Navigator.pop(ctx);
                   _pickImage(ImageSource.gallery);
                 },
               ),
-              const Divider(color: DriverTheme.cardBorder),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(color: DriverTheme.cardBorder),
+              ),
               const Text(
                 'Atau gunakan Ikon Avatar Mitra:',
                 style: TextStyle(fontSize: 12, color: DriverTheme.textSecondary),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: _presetAvatars.map((preset) {
@@ -178,21 +194,21 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                       });
                       Navigator.pop(ctx);
                     },
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isSelected ? DriverTheme.electricBlue : DriverTheme.surfaceDark,
-                        borderRadius: BorderRadius.circular(12),
+                        color: isSelected ? DriverTheme.primaryBenhur : DriverTheme.uberPillBg,
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected ? DriverTheme.brightCyan : DriverTheme.cardBorder,
-                          width: 2,
+                          color: isSelected ? DriverTheme.primaryBenhurLight : DriverTheme.cardBorder,
+                          width: 1.5,
                         ),
                       ),
                       child: Icon(
                         preset['icon'] as IconData,
-                        color: isSelected ? Colors.white : DriverTheme.brightCyan,
-                        size: 28,
+                        color: isSelected ? Colors.white : Colors.white70,
+                        size: 24,
                       ),
                     ),
                   );
@@ -324,19 +340,12 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
         alignment: Alignment.bottomRight,
         children: [
           Container(
-            width: 96,
-            height: 96,
+            width: 92,
+            height: 92,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: DriverTheme.surfaceDark,
-              border: Border.all(color: DriverTheme.brightCyan, width: 2.5),
-              boxShadow: [
-                BoxShadow(
-                  color: DriverTheme.brightCyan.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
+              color: DriverTheme.cardDark,
+              border: Border.all(color: DriverTheme.cardBorder, width: 1.5),
               image: imageProvider != null
                   ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                   : null,
@@ -344,8 +353,8 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
             child: imageProvider == null
                 ? const Icon(
                     Icons.sports_motorsports_rounded,
-                    size: 50,
-                    color: DriverTheme.brightCyan,
+                    size: 46,
+                    color: Colors.white70,
                   )
                 : null,
           ),
@@ -353,13 +362,13 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
             onTap: _showPhotoOptionsDialog,
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(7),
               decoration: const BoxDecoration(
-                color: DriverTheme.electricBlue,
+                color: DriverTheme.primaryBenhur,
                 shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 4)],
+                boxShadow: [BoxShadow(color: Color(0x330038A8), blurRadius: 4)],
               ),
-              child: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+              child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
             ),
           ),
         ],
@@ -372,7 +381,7 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
     return Scaffold(
       backgroundColor: DriverTheme.darkBg,
       appBar: AppBar(
-        title: Text(_isRegister ? 'PENDAFTARAN MITRA DRIVER' : 'MASUK AKUN DRIVER'),
+        title: Text(_isRegister ? 'PENDAFTARAN MITRA' : 'MASUK MITRA'),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -383,44 +392,30 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const DriverOfflineBanner(),
-              // Header Card
+              // Header Card Uber Style
               Container(
-                padding: const EdgeInsets.all(18),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [DriverTheme.surfaceDark, DriverTheme.cardDark],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: DriverTheme.electricBlue.withValues(alpha: 0.4)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: DriverTheme.electricBlue.withValues(alpha: 0.15),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  color: DriverTheme.cardDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 child: Row(
                   children: [
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 48,
+                      height: 48,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: DriverTheme.brightCyan, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: DriverTheme.brightCyan.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
+                        border: Border.all(color: DriverTheme.cardBorder, width: 1.5),
                       ),
                       child: ClipOval(
                         child: Image.asset(
                           'assets/images/app_logo.png',
+                          width: 44,
+                          height: 44,
+                          cacheWidth: 100,
+                          cacheHeight: 100,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -433,15 +428,15 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                           Text(
                             'MITRA RBT PIDIE',
                             style: TextStyle(
-                              color: DriverTheme.textPrimary,
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 15,
                               letterSpacing: 0.5,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          SizedBox(height: 3),
                           Text(
-                            'Aplikasi Resmi Pengemudi & Pengantar Makanan Kab. Pidie',
+                            'Platform Pengemudi & Pengantar Makanan Pidie',
                             style: TextStyle(
                               color: DriverTheme.textSecondary,
                               fontSize: 12,
@@ -454,13 +449,13 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
-              // Tab Selector: Masuk / Daftar
+              // Tab Selector: Masuk / Daftar (Uber Stark Segmented Control)
               Container(
                 decoration: BoxDecoration(
-                  color: DriverTheme.surfaceDark,
-                  borderRadius: BorderRadius.circular(12),
+                  color: DriverTheme.cardDark,
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 padding: const EdgeInsets.all(4),
@@ -469,18 +464,19 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () => setState(() => _isRegister = false),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: !_isRegister ? DriverTheme.electricBlue : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
+                            color: !_isRegister ? DriverTheme.primaryBenhur : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             'Masuk Driver',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontSize: 13,
                               color: !_isRegister ? Colors.white : DriverTheme.textMuted,
                             ),
                           ),
@@ -490,18 +486,19 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                     Expanded(
                       child: InkWell(
                         onTap: () => setState(() => _isRegister = true),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
-                            color: _isRegister ? DriverTheme.electricBlue : Colors.transparent,
-                            borderRadius: BorderRadius.circular(10),
+                            color: _isRegister ? DriverTheme.primaryBenhur : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            'Daftar Mitra Baru',
+                            'Daftar Mitra',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontSize: 13,
                               color: _isRegister ? Colors.white : DriverTheme.textMuted,
                             ),
                           ),
@@ -522,10 +519,10 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 Center(
                   child: TextButton.icon(
                     onPressed: _showPhotoOptionsDialog,
-                    icon: const Icon(Icons.add_a_photo, size: 16, color: DriverTheme.brightCyan),
+                    icon: const Icon(Icons.add_a_photo, size: 15, color: Colors.white70),
                     label: const Text(
                       'Pilih Foto Profil Driver',
-                      style: TextStyle(color: DriverTheme.brightCyan, fontSize: 12),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ),
                 ),
@@ -535,10 +532,10 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 TextFormField(
                   controller: _nameController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Nama Lengkap / Panggilan',
                     hintText: 'Contoh: Rizki Munandar',
-                    prefixIcon: const Icon(Icons.person, color: DriverTheme.brightCyan),
+                    prefixIcon: Icon(Icons.person_outline, color: Colors.white70),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -562,10 +559,10 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'Nomor WhatsApp Driver',
                   hintText: 'Contoh: 081234567890',
-                  prefixIcon: const Icon(Icons.phone_android, color: DriverTheme.brightCyan),
+                  prefixIcon: Icon(Icons.phone_android, color: Colors.white70),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().isEmpty) {
@@ -585,10 +582,10 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                   controller: _plateController,
                   textCapitalization: TextCapitalization.characters,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Nomor Plat Kendaraan',
                     hintText: 'Contoh: BL 4528 ZB',
-                    prefixIcon: const Icon(Icons.confirmation_number, color: DriverTheme.brightCyan),
+                    prefixIcon: Icon(Icons.confirmation_number_outlined, color: Colors.white70),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -608,10 +605,10 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 TextFormField(
                   controller: _vehicleController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Tipe Motor / Kendaraan',
                     hintText: 'Contoh: Honda Vario 160 / Yamaha NMAX',
-                    prefixIcon: const Icon(Icons.two_wheeler, color: DriverTheme.brightCyan),
+                    prefixIcon: Icon(Icons.two_wheeler, color: Colors.white70),
                   ),
                   validator: (val) {
                     if (val == null || val.trim().isEmpty) {
@@ -632,7 +629,7 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                   children: ['Honda Vario', 'Honda Scoopy', 'Honda Beat', 'Yamaha NMAX', 'Honda PCX']
                       .map((veh) => ActionChip(
                             label: Text(veh, style: const TextStyle(fontSize: 11, color: Colors.white)),
-                            backgroundColor: DriverTheme.surfaceDark,
+                            backgroundColor: DriverTheme.uberPillBg,
                             side: const BorderSide(color: DriverTheme.cardBorder),
                             onPressed: () {
                               _vehicleController.text = veh;
@@ -651,7 +648,7 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 decoration: InputDecoration(
                   labelText: 'Kata Sandi (Password)',
                   hintText: 'Minimal 6 karakter',
-                  prefixIcon: const Icon(Icons.lock_outline, color: DriverTheme.brightCyan),
+                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -684,7 +681,7 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                   decoration: InputDecoration(
                     labelText: 'Ulangi Kata Sandi',
                     hintText: 'Ketik ulang kata sandi di atas',
-                    prefixIcon: const Icon(Icons.lock_reset, color: DriverTheme.brightCyan),
+                    prefixIcon: const Icon(Icons.lock_reset, color: Colors.white70),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
@@ -707,26 +704,28 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
 
               const SizedBox(height: 24),
 
-              // Tombol Submit
-              ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: DriverTheme.electricBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
+              // Tombol Submit (Uber Flat Button)
+              SizedBox(
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: DriverTheme.primaryBenhur,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          _isRegister ? 'Daftar Mitra RBT Sekarang' : 'Masuk Sebagai Mitra',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        ),
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                      )
-                    : Text(
-                        _isRegister ? 'Daftar Mitra RBT Sekarang' : 'Masuk Sebagai Mitra',
-                        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
               ),
 
               const SizedBox(height: 16),
@@ -736,7 +735,7 @@ class _DriverAuthScreenState extends State<DriverAuthScreen> {
                 child: Text(
                   _isRegister
                       ? 'Sudah punya akun mitra? Klik tab Masuk Driver di atas'
-                      : 'Belum terdaftar? Klik tab Daftar Mitra Baru di atas',
+                      : 'Belum terdaftar? Klik tab Daftar Mitra di atas',
                   style: const TextStyle(fontSize: 12, color: DriverTheme.textMuted),
                 ),
               ),

@@ -34,6 +34,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
   List<LatLng> _routePoints = [];
   bool _isLoadingRoute = true;
   bool _isUpdatingStatus = false;
+  bool _foodPickedUp = false;
+  bool _isCompletedDialogShowing = false;
+  bool _isCancelledDialogShowing = false;
 
   // Pelacakan GPS Interval 30 Detik
   Timer? _gpsBroadcastTimer;
@@ -162,7 +165,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
 
   /// Membuka Navigasi Belokan demi Belokan (Google Maps Navigation)
   Future<void> _openTurnByTurnNavigation() async {
-    final isDelivering = _currentStatus == 'delivering';
+    final isDelivering = _currentStatus == 'delivering' || (widget.order.isFood && _foodPickedUp);
     final targetLat = isDelivering ? widget.order.destLat : widget.order.pickupLat;
     final targetLng = isDelivering ? widget.order.destLng : widget.order.pickupLng;
     final targetName = isDelivering ? widget.order.destinationAddress : widget.order.pickupAddress;
@@ -183,7 +186,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: DriverTheme.alertAmber,
-            content: Text('Menuju: $targetName ($targetLat, $targetLng)'),
+            content: Text('Menuju: $targetName'),
           ),
         );
       }
@@ -336,6 +339,8 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
   }
 
   void _showCompletedDialog() {
+    if (_isCompletedDialogShowing || !mounted) return;
+    _isCompletedDialogShowing = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -475,6 +480,8 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
 
   /// Alert jika pesanan dibatalkan oleh pemesan
   void _showOrderCancelledAlert() {
+    if (_isCancelledDialogShowing || !mounted) return;
+    _isCancelledDialogShowing = true;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -510,20 +517,24 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
   }
 
   String _getStatusLabel(String status) {
+    final isFood = widget.order.isFood;
     switch (status) {
       case 'searching':
       case 'driverAssigned':
-        return 'Mitra Ditugaskan (Menunggu Jalan)';
+        return isFood ? 'Driver Menuju Resto' : 'Mitra Ditugaskan (Menunggu Jalan)';
       case 'headingToLocation':
+        if (isFood) {
+          return _foodPickedUp ? 'Driver Menuju ke Tempat Antar' : 'Driver Mengambil Pesanan Makanan';
+        }
         return 'Driver Menuju Titik Jemput';
       case 'delivering':
-        return 'Sedang Mengantar ke Tujuan';
+        return isFood ? 'Driver Mengantar ke Pelanggan' : 'Sedang Mengantar ke Tujuan';
       case 'completed':
         return 'Pesanan Telah Selesai';
       case 'cancelled':
         return 'Pesanan Dibatalkan Pelanggan';
       default:
-        return 'Mitra Ditugaskan (Menuju Titik Jemput)';
+        return 'Mitra Ditugaskan';
     }
   }
 
@@ -536,18 +547,18 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
         title: Column(
           children: [
             Text(
-              'PENGANTARAN #${widget.order.orderCode}',
+              'ORDER #${widget.order.orderCode}',
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
             ),
             Text(
               _getStatusLabel(_currentStatus),
-              style: const TextStyle(fontSize: 11, color: DriverTheme.brightCyan),
+              style: const TextStyle(fontSize: 11, color: DriverTheme.textSecondary),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.emergency_outlined, color: DriverTheme.offlineRed),
+            icon: const Icon(Icons.cancel_outlined, color: DriverTheme.offlineRed, size: 22),
             tooltip: 'Lepas Pesanan',
             onPressed: _confirmEmergencyCancel,
           ),
@@ -560,89 +571,107 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
             child: Stack(
               children: [
                 // 1. Peta Rute OpenStreetMap Interaktif
-                FlutterMap(
-                  mapController: _mapController,
-                  options: MapOptions(
-                    initialCenter: _currentDriverLocation ?? widget.order.pickupLatLng,
-                    initialZoom: 15.0,
-                  ),
-                  children: [
-                    const DriverTileLayer(),
-                    if (_routePoints.isNotEmpty)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePoints,
-                            color: isFood ? DriverTheme.foodOrange : DriverTheme.electricBlue,
-                            strokeWidth: 6.0,
+                RepaintBoundary(
+                  child: FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _currentDriverLocation ?? widget.order.pickupLatLng,
+                      initialZoom: 15.0,
+                    ),
+                    children: [
+                      const DriverTileLayer(),
+                      if (_routePoints.isNotEmpty)
+                        PolylineLayer(
+                          polylines: [
+                            Polyline(
+                              points: _routePoints,
+                              color: DriverTheme.primaryBenhur,
+                              strokeWidth: 5.0,
+                            ),
+                          ],
+                        ),
+                      MarkerLayer(
+                        markers: [
+                          // Marker Posisi Motor Driver Aktual (Live GPS)
+                          if (_currentDriverLocation != null)
+                            Marker(
+                              point: _currentDriverLocation!,
+                              width: 44,
+                              height: 44,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: DriverTheme.primaryBenhur,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2.5),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black45,
+                                      blurRadius: 8,
+                                      offset: Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.two_wheeler_rounded,
+                                  color: Colors.white,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
+
+                          // Marker Titik Jemput (Lingkaran Hitam Dot Hijau)
+                          Marker(
+                            point: widget.order.pickupLatLng,
+                            width: 36,
+                            height: 36,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: DriverTheme.primaryBenhur,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2.0),
+                                boxShadow: const [BoxShadow(color: Color(0x330038A8), blurRadius: 4)],
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: const BoxDecoration(
+                                    color: DriverTheme.onlineGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Marker Titik Tujuan (Kotak Hitam Dot Putih Ala Uber)
+                          Marker(
+                            point: widget.order.destLatLng,
+                            width: 36,
+                            height: 36,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: DriverTheme.primaryBenhur,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.white, width: 2.0),
+                                boxShadow: const [BoxShadow(color: Color(0x330038A8), blurRadius: 4)],
+                              ),
+                              child: Center(
+                                child: Container(
+                                  width: 10,
+                                  height: 10,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.rectangle,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                    MarkerLayer(
-                      markers: [
-                        // Marker Posisi Motor Driver Aktual (Live GPS)
-                        if (_currentDriverLocation != null)
-                          Marker(
-                            point: _currentDriverLocation!,
-                            width: 48,
-                            height: 48,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: DriverTheme.electricBlue,
-                                shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 2.5),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: DriverTheme.brightCyan.withValues(alpha: 0.7),
-                                    blurRadius: 12,
-                                    spreadRadius: 3,
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.two_wheeler_rounded,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                          ),
-
-                        // Marker Titik Jemput
-                        Marker(
-                          point: widget.order.pickupLatLng,
-                          width: 40,
-                          height: 40,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: DriverTheme.onlineGreen,
-                              shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 6)],
-                            ),
-                            child: Icon(
-                              isFood ? Icons.restaurant : Icons.my_location,
-                              color: Colors.white,
-                              size: 22,
-                            ),
-                          ),
-                        ),
-
-                        // Marker Titik Tujuan
-                        Marker(
-                          point: widget.order.destLatLng,
-                          width: 40,
-                          height: 40,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              color: DriverTheme.offlineRed,
-                              shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 6)],
-                            ),
-                            child: const Icon(Icons.location_pin, color: Colors.white, size: 24),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
 
                 // Indikator Status GPS 30 Detik
@@ -652,9 +681,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black87,
+                      color: DriverTheme.cardDark,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: DriverTheme.onlineGreen.withValues(alpha: 0.6)),
+                      border: Border.all(color: DriverTheme.cardBorder),
                       boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 6)],
                     ),
                     child: Row(
@@ -671,8 +700,8 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                         const SizedBox(width: 6),
                         Text(
                           _lastGpsSyncTime != null
-                              ? 'GPS Sync 30s (${_lastGpsSyncTime!.minute.toString().padLeft(2, "0")}:${_lastGpsSyncTime!.second.toString().padLeft(2, "0")})'
-                              : 'GPS Aktif • Sync 30s',
+                              ? 'GPS Aktif (${_lastGpsSyncTime!.minute.toString().padLeft(2, "0")}:${_lastGpsSyncTime!.second.toString().padLeft(2, "0")})'
+                              : 'GPS Sync 30s',
                           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -685,9 +714,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                   top: 14,
                   right: 14,
                   child: FloatingActionButton.small(
-                    backgroundColor: DriverTheme.surfaceDark,
-                    foregroundColor: DriverTheme.brightCyan,
-                    elevation: 4,
+                    backgroundColor: DriverTheme.cardDark,
+                    foregroundColor: Colors.white,
+                    elevation: 3,
                     tooltip: 'Pusatkan ke Posisi Motor',
                     onPressed: () {
                       if (_currentDriverLocation != null) {
@@ -696,7 +725,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                         _syncDriverLocation();
                       }
                     },
-                    child: const Icon(Icons.my_location),
+                    child: const Icon(Icons.my_location_rounded, size: 20),
                   ),
                 ),
 
@@ -709,8 +738,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         decoration: BoxDecoration(
-                          color: Colors.black87,
+                          color: DriverTheme.cardDark,
                           borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: DriverTheme.cardBorder),
                         ),
                         child: const Row(
                           mainAxisSize: MainAxisSize.min,
@@ -736,8 +766,9 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(18),
                     decoration: const BoxDecoration(
-                      color: DriverTheme.surfaceDark,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      color: DriverTheme.cardDark,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                      border: Border(top: BorderSide(color: DriverTheme.cardBorder, width: 1.0)),
                       boxShadow: [
                         BoxShadow(color: Colors.black54, blurRadius: 16, offset: Offset(0, -4)),
                       ],
@@ -752,12 +783,13 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Kartu Pelanggan & Kontak Cepat WhatsApp
+                            // Kartu Pelanggan & Kontak Cepat WhatsApp Ala Uber
                             Row(
                               children: [
                                 CircleAvatar(
-                                  backgroundColor: DriverTheme.cardDark,
-                                  child: const Icon(Icons.person, color: DriverTheme.brightCyan),
+                                  radius: 22,
+                                  backgroundColor: DriverTheme.uberPillBg,
+                                  child: const Icon(Icons.person, color: Colors.white, size: 24),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -781,58 +813,82 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                                     ],
                                   ),
                                 ),
-                                // Tombol WhatsApp
-                                IconButton.filled(
+                                // Tombol WhatsApp Bulat
+                                IconButton(
                                   style: IconButton.styleFrom(
-                                    backgroundColor: const Color(0xFF25D366),
+                                    backgroundColor: DriverTheme.uberPillBg,
+                                    side: const BorderSide(color: DriverTheme.cardBorder),
                                     padding: const EdgeInsets.all(10),
                                   ),
-                                  icon: const Icon(Icons.chat, color: Colors.white, size: 20),
+                                  icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white, size: 18),
                                   tooltip: 'Chat WhatsApp Pelanggan',
                                   onPressed: _openCustomerWhatsApp,
                                 ),
                                 const SizedBox(width: 8),
-                                // Tombol Telepon
-                                IconButton.filled(
+                                // Tombol Telepon Bulat
+                                IconButton(
                                   style: IconButton.styleFrom(
-                                    backgroundColor: DriverTheme.electricBlue,
+                                    backgroundColor: DriverTheme.uberPillBg,
+                                    side: const BorderSide(color: DriverTheme.cardBorder),
                                     padding: const EdgeInsets.all(10),
                                   ),
-                                  icon: const Icon(Icons.call, color: Colors.white, size: 20),
+                                  icon: const Icon(Icons.phone_outlined, color: Colors.white, size: 18),
                                   tooltip: 'Telepon Seluler',
                                   onPressed: _callCustomerPhone,
                                 ),
                               ],
                             ),
 
-                            const Divider(color: DriverTheme.cardBorder, height: 20),
+                            const Divider(color: DriverTheme.cardBorder, height: 22),
 
-                            // Informasi Titik Jemput & Antar
+                            // Rute: Titik Jemput (Lingkaran) -> Garis -> Titik Antar (Kotak)
                             Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.my_location, size: 14, color: DriverTheme.onlineGreen),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    widget.order.pickupAddress,
-                                    style: const TextStyle(fontSize: 12, color: DriverTheme.textPrimary),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                Column(
+                                  children: [
+                                    Container(
+                                      width: 10,
+                                      height: 10,
+                                      decoration: const BoxDecoration(
+                                        color: DriverTheme.onlineGreen,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    Container(
+                                      width: 1.5,
+                                      height: 24,
+                                      color: DriverTheme.cardBorder,
+                                    ),
+                                    Container(
+                                      width: 9,
+                                      height: 9,
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.rectangle,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(Icons.location_on, size: 14, color: DriverTheme.offlineRed),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 12),
                                 Expanded(
-                                  child: Text(
-                                    widget.order.destinationAddress,
-                                    style: const TextStyle(fontSize: 12, color: DriverTheme.textPrimary),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        widget.order.pickupAddress,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        widget.order.destinationAddress,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -840,17 +896,18 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
 
                             // Catatan Makanan jika ada
                             if (isFood && widget.order.foodNotes != null && widget.order.foodNotes!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                                 decoration: BoxDecoration(
-                                  color: DriverTheme.foodOrange.withValues(alpha: 0.15),
+                                  color: DriverTheme.uberPillBg,
                                   borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: DriverTheme.cardBorder),
                                 ),
                                 child: Text(
                                   'Catatan: ${widget.order.foodNotes}',
-                                  style: const TextStyle(fontSize: 11, color: DriverTheme.foodOrange, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 11, color: DriverTheme.alertAmber, fontWeight: FontWeight.w500),
                                 ),
                               ),
                             ],
@@ -859,7 +916,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
 
                             // Tagihan Tunai
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                               decoration: BoxDecoration(
                                 color: DriverTheme.darkBg,
                                 borderRadius: BorderRadius.circular(10),
@@ -868,27 +925,32 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  const Expanded(
-                                    child: Text(
-                                      'Tagih Tunai ke Pelanggan:',
-                                      style: TextStyle(fontSize: 12, color: DriverTheme.textMuted),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                  const Row(
+                                    children: [
+                                      Icon(Icons.payments_outlined, size: 18, color: Colors.white70),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Tagih Tunai ke Pelanggan:',
+                                        style: TextStyle(fontSize: 12, color: DriverTheme.textMuted),
+                                      ),
+                                    ],
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    widget.order.formattedTotalFee,
-                                    style: const TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      color: DriverTheme.onlineGreen,
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      widget.order.formattedTotalFee,
+                                      style: const TextStyle(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
 
-                            const SizedBox(height: 14),
+                            const SizedBox(height: 12),
 
                             // Tombol Cepat Navigasi Google Maps (Turn-by-Turn GPS)
                             SizedBox(
@@ -896,12 +958,13 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                               height: 46,
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1E293B),
+                                  backgroundColor: DriverTheme.uberPillBg,
                                   foregroundColor: Colors.white,
-                                  side: const BorderSide(color: DriverTheme.brightCyan, width: 1.5),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  elevation: 0,
+                                  side: const BorderSide(color: DriverTheme.cardBorder),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                 ),
-                                icon: const Icon(Icons.navigation_rounded, color: DriverTheme.brightCyan, size: 20),
+                                icon: const Icon(Icons.navigation_rounded, color: Colors.white, size: 18),
                                 label: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
@@ -909,7 +972,7 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
                                         ? 'NAVIGASI KE TUJUAN (GOOGLE MAPS)'
                                         : 'NAVIGASI KE PENJEMPUTAN (GOOGLE MAPS)',
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.5,
                                       color: Colors.white,
@@ -941,64 +1004,78 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
     );
   }
 
-  /// Indikator Tahapan Visual (1. Jemput -> 2. Antar -> 3. Selesai)
+  /// Indikator Tahapan Visual Sesuai Alur Nyata Driver RBT
   Widget _buildStepProgressIndicator() {
+    final bool isFood = widget.order.isFood;
     int activeStep = 1;
-    if (_currentStatus == 'headingToLocation') {
-      activeStep = 1;
-    } else if (_currentStatus == 'delivering') {
-      activeStep = 2;
-    } else if (_currentStatus == 'completed') {
-      activeStep = 3;
+    if (isFood) {
+      if (_currentStatus == 'driverAssigned' || _currentStatus == 'searching') {
+        activeStep = 1;
+      } else if (_currentStatus == 'headingToLocation') {
+        activeStep = _foodPickedUp ? 3 : 2;
+      } else if (_currentStatus == 'delivering') {
+        activeStep = 3;
+      } else if (_currentStatus == 'completed') {
+        activeStep = 4;
+      }
+    } else {
+      if (_currentStatus == 'headingToLocation') {
+        activeStep = 1;
+      } else if (_currentStatus == 'delivering') {
+        activeStep = 2;
+      } else if (_currentStatus == 'completed') {
+        activeStep = 3;
+      }
     }
 
     Widget buildStepItem(int stepNumber, String title, bool isDone, bool isCurrent) {
       final Color color = isDone
           ? DriverTheme.onlineGreen
           : isCurrent
-              ? DriverTheme.brightCyan
+              ? Colors.white
               : DriverTheme.textMuted.withValues(alpha: 0.5);
 
       return Expanded(
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 22,
-              height: 22,
+              width: 18,
+              height: 18,
               decoration: BoxDecoration(
                 color: isDone
                     ? DriverTheme.onlineGreen
                     : isCurrent
-                        ? DriverTheme.brightCyan
+                        ? DriverTheme.primaryBenhur
                         : Colors.transparent,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: color,
-                  width: 1.8,
+                  width: 1.5,
                 ),
               ),
               child: Center(
                 child: isDone
-                    ? const Icon(Icons.check, size: 14, color: Colors.black)
+                    ? const Icon(Icons.check, size: 11, color: Colors.white)
                     : Text(
                         '$stepNumber',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 9,
                           fontWeight: FontWeight.bold,
-                          color: isCurrent ? Colors.black : DriverTheme.textMuted,
+                          color: isCurrent ? Colors.white : DriverTheme.textMuted,
                         ),
                       ),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Expanded(
               child: Text(
                 title,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: isCurrent || isDone ? FontWeight.bold : FontWeight.normal,
                   color: isCurrent
-                      ? DriverTheme.brightCyan
+                      ? Colors.white
                       : isDone
                           ? DriverTheme.onlineGreen
                           : DriverTheme.textMuted,
@@ -1021,23 +1098,23 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
         border: Border.all(color: DriverTheme.cardBorder),
       ),
       child: Row(
-        children: [
-          buildStepItem(1, 'Jemput', activeStep > 1, activeStep == 1),
-          Container(
-            width: 12,
-            height: 1.5,
-            color: activeStep > 1 ? DriverTheme.onlineGreen : DriverTheme.cardBorder,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-          buildStepItem(2, 'Antar', activeStep > 2, activeStep == 2),
-          Container(
-            width: 12,
-            height: 1.5,
-            color: activeStep > 2 ? DriverTheme.onlineGreen : DriverTheme.cardBorder,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-          ),
-          buildStepItem(3, 'Selesai', _currentStatus == 'completed', activeStep == 3),
-        ],
+        children: isFood
+            ? [
+                buildStepItem(1, 'Menuju Resto', activeStep > 1, activeStep == 1),
+                Container(width: 6, height: 1.5, color: activeStep > 1 ? DriverTheme.onlineGreen : DriverTheme.cardBorder),
+                buildStepItem(2, 'Ambil Makanan', activeStep > 2, activeStep == 2),
+                Container(width: 6, height: 1.5, color: activeStep > 2 ? DriverTheme.onlineGreen : DriverTheme.cardBorder),
+                buildStepItem(3, 'Menuju Antar', activeStep > 3, activeStep == 3),
+                Container(width: 6, height: 1.5, color: activeStep > 3 ? DriverTheme.onlineGreen : DriverTheme.cardBorder),
+                buildStepItem(4, 'Selesai', _currentStatus == 'completed', activeStep == 4),
+              ]
+            : [
+                buildStepItem(1, 'Jemput', activeStep > 1, activeStep == 1),
+                Container(width: 12, height: 1.5, color: activeStep > 1 ? DriverTheme.onlineGreen : DriverTheme.cardBorder, margin: const EdgeInsets.symmetric(horizontal: 4)),
+                buildStepItem(2, 'Antar', activeStep > 2, activeStep == 2),
+                Container(width: 12, height: 1.5, color: activeStep > 2 ? DriverTheme.onlineGreen : DriverTheme.cardBorder, margin: const EdgeInsets.symmetric(horizontal: 4)),
+                buildStepItem(3, 'Selesai', _currentStatus == 'completed', activeStep == 3),
+              ],
       ),
     );
   }
@@ -1047,43 +1124,98 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(12),
-          child: CircularProgressIndicator(color: DriverTheme.brightCyan),
+          child: CircularProgressIndicator(color: Colors.white),
         ),
       );
     }
 
-    // TAHAP 1: Menuju Titik Jemput
-    // Muncul jika status: driverAssigned, searching, atau status awal
+    final bool isFood = widget.order.isFood;
+
+    // TAHAP 1: Menuju Titik Jemput / Resto
     if (_currentStatus == 'driverAssigned' || _currentStatus == 'searching') {
       return SizedBox(
         width: double.infinity,
         height: 50,
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: DriverTheme.electricBlue,
+            backgroundColor: DriverTheme.primaryBenhur,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
-          icon: const Icon(Icons.directions_bike),
-          label: const Text(
-            '1. MENUJU TITIK JEMPUT',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          icon: Icon(isFood ? Icons.storefront_rounded : Icons.directions_bike),
+          label: Text(
+            isFood ? '1. MENUJU RESTO' : '1. MENUJU TITIK JEMPUT',
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           ),
           onPressed: () => _advanceStatus('headingToLocation'),
         ),
       );
     }
 
-    // TAHAP 2: Sudah jalan menuju jemput -> tiba di titik jemput & mulai antar penumpang/makanan
-    if (_currentStatus == 'headingToLocation') {
+    // TAHAP 2: Khusus Makanan: (A) Driver Mengambil Pesanan, (B) Driver Menuju Tempat Antar
+    if (isFood && _currentStatus == 'headingToLocation') {
+      if (!_foodPickedUp) {
+        return SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.takeout_dining_rounded),
+            label: const Text(
+              '2. AMBIL PESANAN MAKANAN',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            ),
+            onPressed: () {
+              setState(() => _foodPickedUp = true);
+              HapticFeedback.mediumImpact();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  backgroundColor: DriverTheme.onlineGreen,
+                  content: Text('Pesanan makanan telah diambil! Lanjutkan menuju ke tempat antar.'),
+                ),
+              );
+            },
+          ),
+        );
+      } else {
+        return SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.delivery_dining_rounded),
+            label: const Text(
+              '3. MENUJU KE TEMPAT ANTAR',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+            ),
+            onPressed: () => _advanceStatus('delivering'),
+          ),
+        );
+      }
+    }
+
+    // TAHAP 2 (Ride): Sudah jalan menuju jemput -> tiba di titik jemput & mulai antar penumpang
+    if (!isFood && _currentStatus == 'headingToLocation') {
       return SizedBox(
         width: double.infinity,
         height: 50,
         child: ElevatedButton.icon(
           style: ElevatedButton.styleFrom(
-            backgroundColor: DriverTheme.brightCyan,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            backgroundColor: DriverTheme.primaryBenhur,
+            foregroundColor: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           icon: const Icon(Icons.place),
           label: const Text(
@@ -1095,11 +1227,11 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
       );
     }
 
-    // TAHAP 3: Sedang mengantar -> selesai pengantaran dan tagih pembayaran (Tombol Slide Ala Grab)
+    // TAHAP 3: Sedang mengantar -> selesai pengantaran dan tagih pembayaran
     if (_currentStatus == 'delivering') {
       return GrabSlideButton(
         key: _slideButtonKey,
-        label: 'GESER UNTUK SELESAIKAN',
+        label: isFood ? 'GESER UNTUK SELESAIKAN (MAKANAN)' : 'GESER UNTUK SELESAIKAN',
         sublabel: 'Terima ${widget.order.formattedTotalFee}',
         onSlideComplete: _confirmCompleteOrder,
       );
@@ -1114,7 +1246,8 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: DriverTheme.onlineGreen,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           icon: const Icon(Icons.check_circle_outline),
           label: const Text('PESANAN SUDAH SELESAI • KEMBALI KE RADAR', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1132,7 +1265,8 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: DriverTheme.offlineRed,
             foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           icon: const Icon(Icons.cancel_outlined),
           label: const Text('PESANAN TELAH DIBATALKAN • KEMBALI', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -1147,9 +1281,10 @@ class _DriverActiveJobScreenState extends State<DriverActiveJobScreen> {
       height: 50,
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: DriverTheme.electricBlue,
+          backgroundColor: DriverTheme.primaryBenhur,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
         icon: const Icon(Icons.directions_bike),
         label: const Text(

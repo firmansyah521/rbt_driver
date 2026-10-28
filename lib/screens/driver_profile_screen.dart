@@ -264,19 +264,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             alignment: Alignment.bottomRight,
             children: [
               Container(
-                width: 96,
-                height: 96,
+                width: 90,
+                height: 90,
                 decoration: BoxDecoration(
-                  color: DriverTheme.surfaceDark,
+                  color: DriverTheme.cardDark,
                   shape: BoxShape.circle,
-                  border: Border.all(color: DriverTheme.electricBlue, width: 2.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: DriverTheme.electricBlue.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      spreadRadius: 2,
-                    ),
-                  ],
+                  border: Border.all(color: DriverTheme.cardBorder, width: 2.0),
                   image: imageProvider != null
                       ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
                       : null,
@@ -284,12 +277,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 child: _isSavingPhoto
                     ? const Center(
                         child: CircularProgressIndicator(
-                          color: DriverTheme.brightCyan,
-                          strokeWidth: 3,
+                          color: Colors.white,
+                          strokeWidth: 2,
                         ),
                       )
                     : (imageProvider == null
-                        ? const Icon(Icons.two_wheeler_rounded, size: 50, color: DriverTheme.brightCyan)
+                        ? const Icon(Icons.two_wheeler_rounded, size: 44, color: Colors.white)
                         : null),
               ),
               InkWell(
@@ -297,12 +290,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 borderRadius: BorderRadius.circular(16),
                 child: Container(
                   padding: const EdgeInsets.all(7),
-                  decoration: const BoxDecoration(
-                    color: DriverTheme.electricBlue,
+                  decoration: BoxDecoration(
+                    color: DriverTheme.primaryBenhur,
                     shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.black45, blurRadius: 4)],
+                    border: Border.all(color: Colors.white, width: 2.0),
                   ),
-                  child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
+                  child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
                 ),
               ),
             ],
@@ -310,74 +303,74 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           const SizedBox(height: 12),
           Text(
             profile.name.isNotEmpty ? profile.name : 'Mitra RBT Pidie',
-            style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: DriverTheme.textPrimary),
           ),
           const SizedBox(height: 6),
           Wrap(
-            spacing: 8,
+            spacing: 6,
             runSpacing: 6,
             alignment: WrapAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: DriverTheme.cardDark,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 child: Text(
                   profile.plateNumber.isNotEmpty
-                      ? 'Plat: ${profile.plateNumber}'
+                      ? profile.plateNumber
                       : 'Plat: Belum Diisi',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
-                    color: DriverTheme.brightCyan,
+                    letterSpacing: 0.5,
+                    color: Colors.white,
                   ),
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: DriverTheme.onlineGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: DriverTheme.onlineGreen.withValues(alpha: 0.4)),
+                  color: DriverTheme.cardDark,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star_rounded, size: 14, color: DriverTheme.onlineGreen),
+                    const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
                     const SizedBox(width: 3),
                     Text(
                       profile.rating.toStringAsFixed(1),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: DriverTheme.onlineGreen,
+                        color: Colors.white,
                       ),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
-                  color: DriverTheme.electricBlue.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: DriverTheme.electricBlue.withValues(alpha: 0.4)),
+                  color: DriverTheme.cardDark,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: DriverTheme.cardBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.navigation_rounded, size: 14, color: DriverTheme.electricBlue),
-                    const SizedBox(width: 3),
+                    const Icon(Icons.navigation_rounded, size: 12, color: Colors.white70),
+                    const SizedBox(width: 4),
                     Text(
                       '${profile.totalTrips} Trip',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: DriverTheme.electricBlue,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -396,23 +389,23 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
     required IconData icon,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: DriverTheme.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
+        color: DriverTheme.cardDark,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: DriverTheme.cardBorder),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: DriverTheme.electricBlue.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
+            padding: const EdgeInsets.all(7),
+            decoration: const BoxDecoration(
+              color: DriverTheme.uberPillBg,
+              shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: DriverTheme.brightCyan, size: 18),
+            child: Icon(icon, color: Colors.white, size: 16),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -427,7 +420,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                 Text(
                   value.isNotEmpty ? value : '-',
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
                     color: DriverTheme.textPrimary,
                   ),
@@ -437,23 +430,22 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
             decoration: BoxDecoration(
-              color: DriverTheme.onlineGreen.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: DriverTheme.onlineGreen.withValues(alpha: 0.4)),
+              color: DriverTheme.uberPillBg,
+              borderRadius: BorderRadius.circular(4),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.lock_outline, size: 11, color: DriverTheme.onlineGreen),
+                Icon(Icons.lock_outline, size: 11, color: Colors.white70),
                 SizedBox(width: 4),
                 Text(
                   'Terkunci',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
-                    color: DriverTheme.onlineGreen,
+                    color: Colors.white70,
                   ),
                 ),
               ],
@@ -465,23 +457,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildDepositCard(dynamic profile) {
-    final deposit = (profile.depositBalance as int?) ?? 0;
+    final int deposit = (profile?.depositBalance is num)
+        ? (profile.depositBalance as num).toInt()
+        : int.tryParse(profile?.depositBalance?.toString() ?? '0') ?? 0;
     final currency = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            DriverTheme.electricBlue.withValues(alpha: 0.22),
-            DriverTheme.surfaceDark,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: DriverTheme.electricBlue.withValues(alpha: 0.5), width: 1.2),
+        color: DriverTheme.cardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: DriverTheme.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,49 +476,58 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: DriverTheme.brightCyan.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: const BoxDecoration(
+                        color: DriverTheme.uberPillBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 18),
                     ),
-                    child: const Icon(Icons.account_balance_wallet_rounded, color: DriverTheme.brightCyan, size: 22),
-                  ),
-                  const SizedBox(width: 10),
-                  const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'SALDO DEPOSIT MITRA',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white70,
-                          letterSpacing: 0.5,
-                        ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'SALDO DEPOSIT MITRA',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: DriverTheme.textMuted,
+                              letterSpacing: 0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Dompet Operasional Driver',
+                            style: TextStyle(fontSize: 10, color: DriverTheme.textMuted),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Biaya Admin Aplikasi 5%',
-                        style: TextStyle(fontSize: 10, color: DriverTheme.textMuted),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: DriverTheme.brightCyan,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  backgroundColor: DriverTheme.primaryBenhur,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  elevation: 0,
                 ),
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Top Up QRIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Top Up QRIS', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
                 onPressed: () {
                   DriverQrisDialog.show(
                     context,
@@ -555,20 +551,19 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                   const SizedBox(height: 2),
                   Text(
                     currency.format(deposit),
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: deposit > 5000 ? DriverTheme.onlineGreen : DriverTheme.alertAmber,
+                      color: Colors.white,
                     ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: (deposit > 5000 ? DriverTheme.onlineGreen : DriverTheme.alertAmber).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: deposit > 5000 ? DriverTheme.onlineGreen : DriverTheme.alertAmber),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   deposit > 5000 ? 'Saldo Aman' : 'Perlu Top Up',
@@ -585,8 +580,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           const Divider(color: DriverTheme.cardBorder, height: 1),
           const SizedBox(height: 8),
           const Text(
-            '💡 Setiap kali Anda berhasil mengambil orderan, saldo deposit akan otomatis terpotong 5% dari ongkir. Jika saldo tidak cukup, Anda tidak dapat mengambil orderan.',
-            style: TextStyle(fontSize: 11, color: Colors.white60, height: 1.3),
+            '💡 Pastikan saldo deposit selalu mencukupi agar akun Anda dapat terus aktif menerima orderan pelanggan.',
+            style: TextStyle(fontSize: 11, color: DriverTheme.textSecondary, height: 1.3),
           ),
         ],
       ),
@@ -603,7 +598,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         title: const Text('PROFIL MITRA DRIVER'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Segarkan Profil',
             onPressed: _refreshProfile,
           ),
@@ -620,7 +615,8 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
           const DriverOfflineBanner(),
           Expanded(
             child: RefreshIndicator(
-              color: DriverTheme.brightCyan,
+              color: Colors.white,
+              backgroundColor: DriverTheme.cardDark,
               onRefresh: _refreshProfile,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -633,13 +629,13 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: DriverTheme.surfaceDark,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: DriverTheme.electricBlue),
+                          color: DriverTheme.cardDark,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: DriverTheme.cardBorder),
                         ),
                         child: Column(
                           children: [
-                            const Icon(Icons.account_circle_outlined, size: 48, color: DriverTheme.brightCyan),
+                            const Icon(Icons.account_circle_outlined, size: 48, color: Colors.white),
                             const SizedBox(height: 10),
                             const Text(
                               'Belum Masuk Akun Driver',
@@ -654,9 +650,11 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                             const SizedBox(height: 14),
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: DriverTheme.electricBlue,
+                                backgroundColor: DriverTheme.primaryBenhur,
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 minimumSize: const Size(double.infinity, 44),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
                               onPressed: () {
                                 Navigator.push(
@@ -760,7 +758,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                         children: [
                           const Row(
                             children: [
-                              Icon(Icons.info_outline, color: DriverTheme.brightCyan, size: 18),
+                              Icon(Icons.info_outline, color: Colors.white, size: 18),
                               SizedBox(width: 8),
                               Text(
                                 'Ketentuan Data Pribadi',
@@ -783,11 +781,12 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                             height: 44,
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: DriverTheme.electricBlue,
+                                backgroundColor: DriverTheme.primaryBenhur,
                                 foregroundColor: Colors.white,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                               ),
-                              icon: const Icon(Icons.support_agent, size: 20),
+                              icon: const Icon(Icons.support_agent, size: 18),
                               label: const Text(
                                 'Hubungi Admin RBT (WhatsApp)',
                                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -804,18 +803,18 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                       // Kelola Izin Operasional Driver
                       Container(
                         decoration: BoxDecoration(
-                          color: DriverTheme.surfaceDark,
+                          color: DriverTheme.cardDark,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: DriverTheme.cardBorder),
                         ),
                         child: ListTile(
                           leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: DriverTheme.onlineGreen.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(8),
+                            padding: const EdgeInsets.all(7),
+                            decoration: const BoxDecoration(
+                              color: DriverTheme.uberPillBg,
+                              shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.security_rounded, color: DriverTheme.onlineGreen, size: 20),
+                            child: const Icon(Icons.security_rounded, color: Colors.white, size: 18),
                           ),
                           title: const Text(
                             'Izin Operasional Mitra',
@@ -840,7 +839,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
                           style: OutlinedButton.styleFrom(
                             foregroundColor: DriverTheme.offlineRed,
                             side: const BorderSide(color: DriverTheme.offlineRed),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           ),
                           icon: const Icon(Icons.logout, size: 18),
                           label: const Text('KELUAR DARI AKUN MITRA', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),

@@ -47,6 +47,8 @@ dependencies:
   connectivity_plus: ^7.3.1
   flutter_local_notifications: ^20.1.0
   flutter_foreground_task: ^9.2.2
+  crypto: ^3.0.8
+  pointycastle: ^4.0.0
 
 dev_dependencies:
   flutter_test:
