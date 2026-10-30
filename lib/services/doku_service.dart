@@ -326,7 +326,7 @@ class DokuService {
           'amount': amount,
           'invoice_number': invoiceNumber,
           'currency': 'IDR',
-          'callback_url': 'https://rbtpidie.app/finish',
+          'callback_url': 'https://rbt.web.id/finish',
           'auto_redirect': true,
         },
         'payment': {
