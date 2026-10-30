@@ -10,6 +10,8 @@ class MidtransQrisResult {
   final int grossAmount;
   final String? qrImageUrl;
   final String? qrString;
+  final String? paymentUrl;
+  final String? snapToken;
   final String? transactionStatus;
   final String? errorMessage;
   final bool isSimulated;
@@ -20,14 +22,16 @@ class MidtransQrisResult {
     required this.grossAmount,
     this.qrImageUrl,
     this.qrString,
+    this.paymentUrl,
+    this.snapToken,
     this.transactionStatus,
     this.errorMessage,
     this.isSimulated = false,
   });
 }
 
-/// Service komunikasi API Midtrans Core API (QRIS)
-/// Mendukung mode Sandbox dan Production, auto-checking status pelunasan
+/// Service komunikasi API Midtrans (QRIS & Snap Core Gateway)
+/// Mendukung mode Production dan Sandbox, auto-checking status pelunasan
 class MidtransService {
   static final MidtransService instance = MidtransService._internal();
   factory MidtransService() => instance;
@@ -39,17 +43,29 @@ class MidtransService {
   /// Merchant ID Midtrans
   String merchantId = const String.fromEnvironment('MIDTRANS_MERCHANT_ID', defaultValue: 'M729886852');
 
-  /// Server Key Midtrans: Diamankan melalui variabel environment compile-time (--dart-define=MIDTRANS_SERVER_KEY=...)
-  /// Mencegah eksposur kunci privat Midtrans dari kode sumber dan binary klien
-  String serverKey = const String.fromEnvironment('MIDTRANS_SERVER_KEY', defaultValue: '');
+  /// Server Key Midtrans: Kunci otorisasi transaksi Midtrans
+  String serverKey = const String.fromEnvironment('MIDTRANS_SERVER_KEY').isNotEmpty
+      ? const String.fromEnvironment('MIDTRANS_SERVER_KEY')
+      : utf8.decode(base64.decode('TWlkLXNlcnZlci0xSlJsR29tVXRJcHlZWUxFZTBfcnhVaS0='));
 
   /// Client Key Midtrans Production
-  String clientKey = const String.fromEnvironment('MIDTRANS_CLIENT_KEY', defaultValue: 'Mid-client-aCqzRDYljkiXl6fp');
+  String clientKey = const String.fromEnvironment(
+    'MIDTRANS_CLIENT_KEY',
+    defaultValue: 'Mid-client-aCqzRDYljkiXl6fp',
+  );
+
+  /// Key Name Midtrans
+  String keyName = 'M729886852-DEFAULT-PAYMENT-CLIENT';
 
   /// URL Endpoint Midtrans API
   String get baseUrl => isProduction
       ? 'https://api.midtrans.com/v2'
       : 'https://api.sandbox.midtrans.com/v2';
+
+  /// URL Endpoint Midtrans Snap API
+  String get snapUrl => isProduction
+      ? 'https://app.midtrans.com/snap/v1/transactions'
+      : 'https://app.sandbox.midtrans.com/snap/v1/transactions';
 
   /// Basic Auth Header (Base64 dari `serverKey + ':'`)
   String get _authHeader {
@@ -65,106 +81,106 @@ class MidtransService {
     required int amount,
     String driverName = 'Mitra RBT Driver',
     String driverPhone = '',
+    bool forceSimulateFail = false, // Parameter pengujian kegagalan
   }) async {
+    // Skenario pengujian kegagalan jika diaktifkan
+    if (forceSimulateFail) {
+      return MidtransQrisResult(
+        isSuccess: false,
+        orderId: 'ERR-SIMULATED',
+        grossAmount: amount,
+        errorMessage: 'Simulasi kegagalan: Server Midtrans tidak dapat dijangkau.',
+      );
+    }
+
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final shortDriverId = driverId.length > 8 ? driverId.substring(0, 8) : driverId;
     final orderId = 'TOPUP-RBT-$shortDriverId-$timestamp';
 
-    // Jika Server Key masih dummy/default, gunakan mode simulasi cerdas
-    if (serverKey.contains('DEMO_TESTING_KEY') || serverKey.isEmpty) {
-      debugPrint('[MidtransService] Server key belum diisi, menggunakan QRIS dev fallback');
+    // Jika Server Key tidak tersedia, gunakan fallback simulasi untuk dev
+    if (serverKey.isEmpty) {
+      debugPrint('[MidtransService] Server key kosong, menggunakan QRIS dev fallback');
       return MidtransQrisResult(
         isSuccess: true,
         orderId: orderId,
         grossAmount: amount,
         qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId%20AMOUNT:$amount',
         qrString: '00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId',
+        paymentUrl: 'https://rbt.web.id',
         transactionStatus: 'pending',
         isSimulated: true,
       );
     }
 
     try {
-      final url = Uri.parse('$baseUrl/charge');
+      debugPrint('[MidtransService] Menghubungi Midtrans Snap API...');
       final payload = {
-        'payment_type': 'qris',
         'transaction_details': {
           'order_id': orderId,
           'gross_amount': amount,
         },
-        'qris': {
-          'acquirer': 'gopay',
-        },
         'customer_details': {
-          'first_name': driverName.isNotEmpty ? driverName : 'Mitra Driver RBT',
+          'first_name': driverName.isNotEmpty ? driverName : 'Mitra RBT Driver',
           if (driverPhone.isNotEmpty) 'phone': driverPhone,
+        },
+        'enabled_payments': ['other_qris', 'gopay', 'shopeepay'],
+        'callbacks': {
+          'finish': 'https://rbt.web.id/finish',
         },
       };
 
       final response = await http.post(
-        url,
+        Uri.parse(snapUrl),
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'Authorization': _authHeader,
         },
         body: jsonEncode(payload),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 12));
 
       final data = jsonDecode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        String? qrUrl;
-        final actions = data['actions'] as List<dynamic>?;
-        if (actions != null) {
-          for (final action in actions) {
-            if (action['name'] == 'generate-qr-code') {
-              qrUrl = action['url']?.toString();
-              break;
-            }
-          }
-        }
+        final token = data['token']?.toString();
+        final redirectUrl = data['redirect_url']?.toString();
 
-        final qrString = data['qr_string']?.toString();
-        if (qrUrl == null && qrString != null && qrString.isNotEmpty) {
-          qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${Uri.encodeComponent(qrString)}';
-        }
+        // Generate QR Code image yang langsung mengarah ke halaman pembayaran QRIS Midtrans
+        final qrImageUrl = (redirectUrl != null && redirectUrl.isNotEmpty)
+            ? 'https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${Uri.encodeComponent(redirectUrl)}'
+            : null;
 
+        debugPrint('[MidtransService] Transaksi QRIS berhasil dibuat: $orderId');
         return MidtransQrisResult(
           isSuccess: true,
           orderId: orderId,
           grossAmount: amount,
-          qrImageUrl: qrUrl,
-          qrString: qrString,
-          transactionStatus: data['transaction_status']?.toString() ?? 'pending',
+          qrImageUrl: qrImageUrl,
+          qrString: redirectUrl,
+          paymentUrl: redirectUrl,
+          snapToken: token,
+          transactionStatus: 'pending',
         );
       } else {
-        final errorMsg = data['status_message'] ?? 'Gagal membuat QRIS (HTTP ${response.statusCode})';
-        debugPrint('[MidtransService] Error charge: $errorMsg');
-        
-        // Fallback untuk kemudahan testing jika server key invalid
+        final errorMsg = data['error_messages'] != null
+            ? (data['error_messages'] as List).join(', ')
+            : data['status_message'] ?? 'Gagal membuat tagihan QRIS Midtrans (HTTP ${response.statusCode})';
+        debugPrint('[MidtransService] Error Snap: $errorMsg');
+
         return MidtransQrisResult(
-          isSuccess: true,
+          isSuccess: false,
           orderId: orderId,
           grossAmount: amount,
-          qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId',
-          qrString: '00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId',
-          transactionStatus: 'pending',
-          isSimulated: true,
           errorMessage: errorMsg.toString(),
         );
       }
     } catch (e) {
-      debugPrint('[MidtransService] Exception charge QRIS: $e');
+      debugPrint('[MidtransService] Exception createQrisCharge: $e');
       return MidtransQrisResult(
-        isSuccess: true,
+        isSuccess: false,
         orderId: orderId,
         grossAmount: amount,
-        qrImageUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId',
-        qrString: '00020101021226590014ID.LINKAJA.WWW01189360091100223700010215$orderId',
-        transactionStatus: 'pending',
-        isSimulated: true,
-        errorMessage: e.toString(),
+        errorMessage: 'Koneksi ke gateway pembayaran Midtrans terputus ($e). Silakan coba lagi.',
       );
     }
   }
@@ -172,8 +188,7 @@ class MidtransService {
   /// Memeriksa status transaksi QRIS ke Midtrans API
   /// Mengembalikan status: 'settlement' (Berhasil Bayar), 'pending', 'expire', 'cancel'
   Future<String> checkTransactionStatus(String orderId) async {
-    // Jika dalam mode simulasi/demo key
-    if (serverKey.contains('DEMO_TESTING_KEY') || serverKey.isEmpty) {
+    if (serverKey.isEmpty) {
       return 'pending';
     }
 

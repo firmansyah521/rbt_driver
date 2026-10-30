@@ -459,7 +459,7 @@ class _DriverRadarScreenState extends State<DriverRadarScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Silakan lakukan Top Up via QRIS DOKU terlebih dahulu untuk melanjutkan.',
+              'Silakan lakukan Top Up via QRIS Midtrans terlebih dahulu untuk melanjutkan.',
               style: TextStyle(color: DriverTheme.textMuted, fontSize: 11),
             ),
           ],

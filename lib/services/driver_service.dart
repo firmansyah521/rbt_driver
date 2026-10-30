@@ -1106,7 +1106,7 @@ class DriverService {
   Future<bool> topUpDeposit({
     required int amount,
     required String referenceId,
-    String paymentMethod = 'qris_doku',
+    String paymentMethod = 'qris_midtrans',
   }) async {
     final c = client;
     final user = currentUser;

@@ -5,10 +5,11 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/driver_theme.dart';
 import '../services/driver_service.dart';
-import '../services/doku_service.dart';
+import '../services/midtrans_service.dart';
 
-/// Modal Dialog Top Up Saldo Deposit Driver via QRIS DOKU
-/// Dilengkapi pengecekan otomatis (auto-polling) status pelunasan real-time.
+/// Modal Dialog Top Up Saldo Deposit Driver via QRIS Midtrans
+/// Dilengkapi pengecekan otomatis (auto-polling) status pelunasan real-time
+/// serta penanganan kondisi gagal memuat QRIS dengan opsi Coba Lagi.
 class DriverQrisDialog extends StatefulWidget {
   final int? initialAmount;
   final VoidCallback? onSuccessRedirect;
@@ -48,9 +49,10 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
   // Status proses
   bool _isLoadingQris = false;
   bool _isSuccess = false;
-  DokuQrisResult? _qrisResult;
+  String? _loadErrorMessage;
+  MidtransQrisResult? _qrisResult;
 
-  // Timer auto check
+  // Timer auto check & countdown
   Timer? _pollingTimer;
   Timer? _countdownTimer;
   int _secondsRemaining = 900; // 15 menit
@@ -84,7 +86,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
     return '$m:$s';
   }
 
-  /// Memulai tagihan QRIS ke DOKU
+  /// Memulai pembuatan tagihan QRIS ke Midtrans
   Future<void> _generateQris() async {
     final amount = int.tryParse(_customAmountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? _selectedAmount;
     if (amount < 5000) {
@@ -119,10 +121,11 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
 
     setState(() {
       _isLoadingQris = true;
+      _loadErrorMessage = null;
       _selectedAmount = amount;
     });
 
-    final res = await DokuService.instance.createQrisCharge(
+    final res = await MidtransService.instance.createQrisCharge(
       driverId: profile.id,
       amount: amount,
       driverName: profile.name,
@@ -133,19 +136,18 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
 
     setState(() {
       _isLoadingQris = false;
-      _qrisResult = res;
+      if (res.isSuccess) {
+        _qrisResult = res;
+        _loadErrorMessage = null;
+      } else {
+        _qrisResult = null;
+        _loadErrorMessage = res.errorMessage ?? 'Gagal membuat tagihan QRIS Midtrans.';
+      }
     });
 
     if (res.isSuccess) {
       _startAutoCheckPolling(res.orderId, amount);
       _startCountdown();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: DriverTheme.offlineRed,
-          content: Text(res.errorMessage ?? 'Gagal membuat tagihan QRIS DOKU.'),
-        ),
-      );
     }
   }
 
@@ -173,20 +175,20 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
     });
   }
 
-  /// AUTO CHECK POLLING: Otomatis memeriksa status DOKU setiap 4 detik
+  /// AUTO CHECK POLLING: Otomatis memeriksa status Midtrans setiap 3.5 detik
   void _startAutoCheckPolling(String orderId, int amount) {
     _pollingTimer?.cancel();
 
-    _pollingTimer = Timer.periodic(const Duration(milliseconds: 4000), (timer) async {
+    _pollingTimer = Timer.periodic(const Duration(milliseconds: 3500), (timer) async {
       if (!mounted || _isSuccess) {
         timer.cancel();
         return;
       }
 
-      final status = await DokuService.instance.checkTransactionStatus(orderId);
+      final status = await MidtransService.instance.checkTransactionStatus(orderId);
 
-      // Jika DOKU mengembalikan settlement / success (Lunas)
-      if (status == 'settlement' || status == 'success') {
+      // Jika Midtrans mengembalikan settlement / capture / success (Lunas)
+      if (status == 'settlement' || status == 'capture' || status == 'success') {
         timer.cancel();
         await _handlePaymentSuccess(orderId, amount);
       }
@@ -201,11 +203,11 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
     _pollingTimer?.cancel();
     _countdownTimer?.cancel();
 
-    // 1. Tambahkan saldo ke Supabase Database dengan metode qris_doku
+    // 1. Tambahkan saldo ke Supabase Database dengan metode qris_midtrans
     await DriverService.instance.topUpDeposit(
       amount: amount,
       referenceId: orderId,
-      paymentMethod: 'qris_doku',
+      paymentMethod: 'qris_midtrans',
     );
 
     HapticFeedback.heavyImpact();
@@ -258,9 +260,11 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
           padding: const EdgeInsets.all(20),
           child: _isSuccess
               ? _buildSuccessView()
-              : _qrisResult == null
-                  ? _buildSelectAmountView(profile.depositBalance)
-                  : _buildQrisDisplayView(),
+              : _loadErrorMessage != null
+                  ? _buildErrorView()
+                  : _qrisResult == null
+                      ? _buildSelectAmountView(profile.depositBalance)
+                      : _buildQrisDisplayView(),
         ),
       ),
     );
@@ -294,7 +298,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   Text(
-                    'Saldo dompet operasional mitra driver via DOKU',
+                    'Saldo dompet operasional mitra driver via Midtrans QRIS',
                     style: TextStyle(fontSize: 11, color: DriverTheme.textMuted),
                   ),
                 ],
@@ -421,11 +425,11 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
           child: const Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline, color: Colors.white70, size: 16),
+              Icon(Icons.verified_user_outlined, color: DriverTheme.brightCyan, size: 16),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Saldo ini digunakan sebagai deposit operasional akun Anda setiap kali menerima dan menyelesaikan orderan pelanggan via QRIS resmi DOKU.',
+                  'Saldo ini digunakan sebagai deposit operasional akun Anda setiap kali menerima dan menyelesaikan orderan via QRIS Midtrans.',
                   style: TextStyle(fontSize: 11, color: DriverTheme.textSecondary, height: 1.3),
                 ),
               ),
@@ -434,14 +438,17 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
         ),
         const SizedBox(height: 18),
 
-        // Tombol Buat Tagihan QRIS DOKU
+        // Tombol Buat Tagihan QRIS Midtrans
         SizedBox(
           height: 48,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFE5252A), // DOKU Brand Red
+              backgroundColor: const Color(0xFF002B49), // Midtrans Deep Navy
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Color(0xFF0070BA), width: 1.2), // Midtrans Accent Blue
+              ),
               elevation: 0,
             ),
             onPressed: _isLoadingQris ? null : _generateQris,
@@ -454,10 +461,10 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                 : const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.qr_code_2_rounded, size: 20),
+                      Icon(Icons.qr_code_2_rounded, size: 20, color: Color(0xFF00D1FF)),
                       SizedBox(width: 8),
                       Text(
-                        'Bayar dengan QRIS DOKU',
+                        'Bayar dengan QRIS Midtrans',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ],
@@ -468,7 +475,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
     );
   }
 
-  /// TAMPILAN 2: DISPLAY QRIS DOKU DENGAN AUTO-CHECKING STATUS
+  /// TAMPILAN 2: DISPLAY QRIS MIDTRANS DENGAN AUTO-CHECKING STATUS
   Widget _buildQrisDisplayView() {
     final res = _qrisResult!;
 
@@ -484,7 +491,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Scan QRIS DOKU',
+                  'Scan QRIS Midtrans',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 Text(
@@ -547,7 +554,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
           ),
           child: Column(
             children: [
-              // Logo QRIS Nasional + DOKU
+              // Logo QRIS Nasional + Midtrans
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -566,11 +573,11 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE5252A),
+                      color: const Color(0xFF002B49),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: const Text(
-                      'DOKU',
+                      'midtrans',
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
                     ),
                   ),
@@ -583,7 +590,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
               ),
               const SizedBox(height: 12),
 
-              // Gambar QR Code DOKU
+              // Gambar QR Code Midtrans
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: res.qrImageUrl != null
@@ -598,7 +605,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                             width: 220,
                             height: 220,
                             child: Center(
-                              child: CircularProgressIndicator(color: Color(0xFFE5252A)),
+                              child: CircularProgressIndicator(color: Color(0xFF0070BA)),
                             ),
                           );
                         },
@@ -606,9 +613,13 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                           return Container(
                             width: 220,
                             height: 220,
-                            color: Colors.grey.shade200,
+                            color: Colors.grey.shade100,
                             child: const Center(
-                              child: Text('Gagal memuat gambar QRIS', style: TextStyle(color: Colors.red, fontSize: 12)),
+                              child: Text(
+                                'QR Code siap di tautan checkout',
+                                style: TextStyle(color: Colors.black54, fontSize: 11),
+                                textAlign: TextAlign.center,
+                              ),
                             ),
                           );
                         },
@@ -616,12 +627,12 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                     : const SizedBox(
                         width: 220,
                         height: 220,
-                        child: Center(child: Text('QR Code tidak tersedia')),
+                        child: Center(child: Text('QR Code dimuat via Checkout Link')),
                       ),
               ),
               const SizedBox(height: 8),
               const Text(
-                'DOKU Payment Gateway • RBT Driver',
+                'Midtrans Payment Gateway • RBT Driver',
                 style: TextStyle(color: Colors.black54, fontSize: 9, fontWeight: FontWeight.w600),
               ),
             ],
@@ -629,21 +640,21 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
         ),
         const SizedBox(height: 14),
 
-        // Tombol Buka Halaman Checkout DOKU jika driver bayar di HP yang sama
+        // Tombol Buka Halaman Checkout Midtrans jika driver bayar di HP yang sama
         if (res.paymentUrl != null && res.paymentUrl!.isNotEmpty) ...[
           SizedBox(
             width: double.infinity,
-            height: 42,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
+            height: 44,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0070BA), // Midtrans Interactive Blue
                 foregroundColor: Colors.white,
-                side: const BorderSide(color: Color(0xFFE5252A), width: 1.2),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                backgroundColor: const Color(0xFFE5252A).withValues(alpha: 0.15),
+                elevation: 0,
               ),
               icon: const Icon(Icons.open_in_browser, size: 18, color: Colors.white),
               label: const Text(
-                'Buka Halaman QRIS DOKU',
+                'Buka Halaman Pembayaran Midtrans',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
               ),
               onPressed: () async {
@@ -665,10 +676,10 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: DriverTheme.onlineGreen.withValues(alpha: 0.4)),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
+              SizedBox(
                 width: 12,
                 height: 12,
                 child: CircularProgressIndicator(
@@ -676,8 +687,8 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                   strokeWidth: 2,
                 ),
               ),
-              const SizedBox(width: 8),
-              const Text(
+              SizedBox(width: 8),
+              Text(
                 'Menunggu pembayaran... Terverifikasi Otomatis',
                 style: TextStyle(color: DriverTheme.onlineGreen, fontSize: 11, fontWeight: FontWeight.bold),
               ),
@@ -706,10 +717,10 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 10, color: DriverTheme.textMuted),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
 
         // Tombol simulasi bayar (berguna untuk testing bila server belum aktif)
-        if (res.isSimulated || DokuService.instance.secretKey.isEmpty)
+        if (res.isSimulated || MidtransService.instance.serverKey.isEmpty)
           TextButton.icon(
             style: TextButton.styleFrom(
               foregroundColor: Colors.white70,
@@ -726,7 +737,99 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
     );
   }
 
-  /// TAMPILAN 3: STATUS SUKSES DENGAN ANIMASI CENTANG
+  /// TAMPILAN 3: KONDISI GAGAL MEMUAT QRIS DENGAN OPSI COBA LAGI
+  Widget _buildErrorView() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.white60, size: 20),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: DriverTheme.offlineRed.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+            border: Border.all(color: DriverTheme.offlineRed.withValues(alpha: 0.6), width: 1.5),
+          ),
+          child: const Icon(Icons.error_outline_rounded, color: DriverTheme.offlineRed, size: 36),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Gagal Memuat QRIS Midtrans',
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: DriverTheme.uberPillBg,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: DriverTheme.cardBorder),
+          ),
+          child: Text(
+            _loadErrorMessage ?? 'Terjadi kendala saat menghubungkan ke server gateway Midtrans.',
+            style: const TextStyle(fontSize: 12, color: Colors.white70, height: 1.4),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 20),
+        // Tombol Coba Lagi
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: DriverTheme.primaryBenhur,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              elevation: 0,
+            ),
+            icon: const Icon(Icons.refresh_rounded, size: 20),
+            label: const Text(
+              'Coba Lagi',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            ),
+            onPressed: _isLoadingQris ? null : _generateQris,
+          ),
+        ),
+        const SizedBox(height: 10),
+        // Tombol Ganti Nominal / Kembali
+        SizedBox(
+          width: double.infinity,
+          height: 42,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white70,
+            ),
+            child: const Text('Kembali & Pilih Nominal Lain'),
+            onPressed: () {
+              setState(() {
+                _loadErrorMessage = null;
+                _qrisResult = null;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// TAMPILAN 4: STATUS SUKSES DENGAN ANIMASI CENTANG
   Widget _buildSuccessView() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -744,7 +847,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
         ),
         const SizedBox(height: 20),
         const Text(
-          'PEMBAYARAN QRIS DOKU BERHASIL!',
+          'PEMBAYARAN QRIS MIDTRANS BERHASIL!',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
