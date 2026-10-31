@@ -6,6 +6,7 @@ windows/
 .dart_tool/
 .idea/
 test/
+build/
 *.apk
 *.aab
 *.jks
