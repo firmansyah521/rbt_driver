@@ -583,7 +583,7 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Pembayaran Nasional',
+                    'QRIS Universal GPN',
                     style: TextStyle(color: Colors.black87, fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -632,30 +632,43 @@ class _DriverQrisDialogState extends State<DriverQrisDialog> {
               ),
               const SizedBox(height: 8),
               const Text(
-                'Midtrans Payment Gateway • RBT Driver',
+                'Midtrans Official Payment Gateway • RBT Driver',
                 style: TextStyle(color: Colors.black54, fontSize: 9, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Bisa di-scan / dibayar via BCA, Mandiri, BRI, BNI, BSI, DANA, OVO, ShopeePay & GoPay',
+                  style: TextStyle(color: Color(0xFF005596), fontSize: 9.5, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 14),
 
-        // Tombol Buka Halaman Checkout Midtrans jika driver bayar di HP yang sama
+        // Tombol Utama Buka Halaman Checkout Midtrans (Semua Bank & E-Wallet)
         if (res.paymentUrl != null && res.paymentUrl!.isNotEmpty) ...[
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 48,
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0070BA), // Midtrans Interactive Blue
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+                elevation: 2,
               ),
-              icon: const Icon(Icons.open_in_browser, size: 18, color: Colors.white),
+              icon: const Icon(Icons.qr_code_scanner_rounded, size: 20, color: Colors.white),
               label: const Text(
-                'Buka Halaman Pembayaran Midtrans',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                'Buka QRIS & Bayar via Semua Bank',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
               ),
               onPressed: () async {
                 final uri = Uri.parse(res.paymentUrl!);
